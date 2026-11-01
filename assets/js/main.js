@@ -269,7 +269,7 @@
   }));
   const menuButton = $('.menu-toggle');
   const navGroups = $$('[data-nav-group]');
-  const desktopNav = window.matchMedia('(min-width: 901px)');
+  const wideNav = window.matchMedia('(min-width: 901px)');
   let navCloseTimer;
   function closeMega() {
     window.clearTimeout(navCloseTimer);
@@ -284,17 +284,24 @@
     closeMega(); group.classList.add('is-open');
     group.querySelector('.nav-link').setAttribute('aria-expanded', 'true');
     group.querySelector('.nav-subtoggle').setAttribute('aria-expanded', 'true');
-    if (desktopNav.matches) { document.body.classList.add('nav-open'); $('.site-header').classList.add('menu-active'); }
+    if (wideNav.matches) { document.body.classList.add('nav-open'); $('.site-header').classList.add('menu-active'); }
   }
   function closeMenu() {
     closeMega(); menuButton.setAttribute('aria-expanded', 'false'); $('.main-nav').classList.remove('is-open');
     menuButton.setAttribute('aria-label', '打开导航'); document.body.classList.remove('mobile-nav-open');
   }
   navGroups.forEach(group => {
-    group.addEventListener('pointerenter', event => { if (desktopNav.matches && event.pointerType !== 'touch') openMega(group); });
-    group.addEventListener('pointerleave', () => { if (desktopNav.matches) navCloseTimer = window.setTimeout(closeMega, 160); });
-    group.addEventListener('focusin', () => { if (desktopNav.matches) openMega(group); });
+    let pointerType = 'mouse';
+    group.addEventListener('pointerdown', event => { pointerType=event.pointerType; });
+    group.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') { pointerType='mouse'; openMega(group); } });
+    group.addEventListener('pointerleave', event => { if (event.pointerType === 'mouse') navCloseTimer = window.setTimeout(closeMega, 160); });
+    group.addEventListener('focusin', event => { if (wideNav.matches && event.target.matches(':focus-visible')) openMega(group); });
     group.addEventListener('focusout', event => { if (!group.contains(event.relatedTarget)) navCloseTimer = window.setTimeout(closeMega, 100); });
+    group.querySelector('.nav-link').addEventListener('click', event => {
+      event.preventDefault(); event.stopPropagation();
+      const tapToggle = pointerType === 'touch' || pointerType === 'pen';
+      if (tapToggle && group.classList.contains('is-open')) closeMega(); else openMega(group);
+    });
     group.querySelector('.nav-subtoggle').addEventListener('click', () => { if (group.classList.contains('is-open')) closeMega(); else openMega(group); });
     group.querySelector('.nav-link').addEventListener('keydown', event => {
       if (event.key !== 'ArrowDown') return;
@@ -316,10 +323,10 @@
     else if (group === 'electrical' || group === 'control') selectSubject(group);
     closeMenu(); openCourse(course);
   }));
-  $$('.main-nav a').forEach(link => link.addEventListener('click', closeMenu));
+  $$('.main-nav a:not(.nav-link)').forEach(link => link.addEventListener('click', closeMenu));
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
   document.addEventListener('click', event => { if (!event.target.closest('.header-inner')) closeMenu(); });
-  window.matchMedia('(min-width: 901px)').addEventListener('change', event => { if (event.matches) closeMenu(); });
+  wideNav.addEventListener('change', closeMenu);
 
   function renderContact() {
     const contact = content.contact;
