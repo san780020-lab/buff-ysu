@@ -1,0 +1,37 @@
+/* System typography: Apple system faces where available, clear Chinese fallback on Windows. */
+:root { --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro SC","SF Pro Text","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif; --text-body:#c1c8d7; --text-secondary:#aab5c9; --text-caption:#9ba8bf; }
+body { font-family:var(--font-ui); font-weight:400; line-height:1.65; letter-spacing:0; -webkit-text-size-adjust:100%; }
+button,input,select,textarea { font-family:inherit; }
+h1,h2,h3,h4 { letter-spacing:-.025em; }
+.hero-description,.section-lead,.module-dialog .section-lead,.analysis-intro,.about-description,.contact-layout h2+p { color:var(--text-body); line-height:1.85; }
+.section-note,.document-source,.document-card p,.document-card small,.course-description,.course-topics,.roadmap-item p,.reexam-list p,.subject-intro>p,.about-caption,.daily-question-body>p,.daily-answer-panel p,.video-card-info>p,.reference-meta,.reference-scope,.analysis-empty-grid p,.analysis-source p,.exam-compare article>p:not(.exam-legend) { color:var(--text-secondary); font-size:14px; line-height:1.85; letter-spacing:0; }
+.poster-card h4 { font-size:15px; font-weight:600; line-height:1.65; }
+.poster-card>p { font-size:13px; line-height:1.8; color:var(--text-secondary); }
+.poster-expand,.poster-position,.poster-toolbar button,.poster-toolbar>a,.poster-toolbar .poster-load-info { font-size:12px; }
+.poster-expand,.poster-position,.poster-toolbar .poster-load-info { color:var(--text-caption); }
+.module-window-heading p { font-size:13px; line-height:1.7; color:var(--text-secondary); }
+.module-window-heading>div>span { color:var(--text-caption); font-size:11px; }
+.module-dialog .module-window-heading h2 { font-weight:600; }
+.course-stage,.planning-label,.filter-direction,.document-label,.reference-tag,.data-pending,.exam-legend,.video-meta,.platform-label,.contact-person-role,.contact-account,.footer-main p,.footer-main>a:last-child,.footer-bottom,.hero-art-caption,.reexam-preview>small { color:var(--text-caption); font-size:12px; line-height:1.75; }
+.filter-button,.subject-tabs button,.module-subject-switch button,.module-related button,.copy-button,.detail-text,.detail-offer,.detail-price-row p,.dialog-notice,.dialog-inner ul { font-size:13px; }
+.detail-text,.detail-offer,.detail-price-row p,.dialog-notice,.dialog-inner ul { color:var(--text-secondary); line-height:1.85; }
+.dialog-inner>.eyebrow,.eyebrow,.section-eyebrow { font-size:12px; }
+.mega-primary>p,.mega-secondary>p,.mega-note>span { color:var(--text-caption); }
+.mega-secondary>a,.mega-secondary>button { font-size:14px; line-height:1.65; }
+.hero-profiles .profile-link,.profile-badge,.profile-link,.nav-profiles .profile-link { font-size:12px; }
+.admissions-table { font-size:14px; }
+.admission-bar-label,.admission-chart-note { color:var(--text-secondary); }
+.control-board-top,.control-adjust,.control-board-bottom { font-size:12px; }
+.control-board-top,.control-adjust,.control-board-bottom,.plot-heading>span { color:var(--text-caption); }
+.control-adjust label { color:var(--text-secondary); }
+.control-loop .control-caption { fill:var(--text-caption); }
+@media(min-width:901px) { .nav-link,.nav-contact { font-size:13px; font-weight:500; color:#dddfe7; } }
+@media(max-width:640px) {
+  .section-note,.document-source,.document-card small,.reference-meta,.reference-scope,.course-description,.course-topics,.roadmap-item p,.reexam-list p,.subject-intro>p,.about-caption,.daily-answer-panel p,.video-card-info>p,.analysis-empty-grid p,.analysis-source p { font-size:13px; }
+  .module-dialog .module-window-heading h2 { font-size:21px; }
+  .module-window-heading p { font-size:12px; }
+  .poster-card h4 { font-size:14px; }
+  .poster-card>p,.poster-expand { font-size:12px; }
+  .hero-art-caption { font-size:11px; padding-inline:20px; }
+  .poster-toolbar>div { flex-wrap:wrap; }
+}

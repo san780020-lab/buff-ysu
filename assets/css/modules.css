@@ -184,6 +184,13 @@ html { scrollbar-gutter:stable; }
 .module-dialog[data-module="admissions"] .admissions-chart { padding:20px 25px; }
 .module-dialog[data-module="admissions"] .admission-bar-row { padding:11px 0; }
 .profile-links { display:flex; flex-wrap:wrap; gap:12px; }
+.poster-preview>img { background-size:contain; background-position:center; background-repeat:no-repeat; }
+.poster-dialog[open] { display:flex; flex-direction:column; height:min(850px,94dvh); }
+.poster-dialog-head,.poster-toolbar { flex-shrink:0; }
+.poster-viewer { flex:1; min-height:0; }
+.poster-toolbar .poster-load-info { flex-basis:100%; align-items:center; justify-content:space-between; color:#929eb7; font-size:11px; min-height:18px; }
+.poster-toolbar #poster-retry[hidden] { display:none; }
+.poster-toolbar #poster-retry { color:#9dbfff; padding:3px 9px; }
 .profile-link { display:inline-flex; align-items:center; gap:10px; padding:11px 17px; border:1px solid #ffffff18; border-radius:14px; background:#ffffff05; color:#cbd5e8; font-size:13px; transition:background .2s,border-color .2s,transform .2s; }
 .profile-link:hover { background:#ffffff0d; border-color:#ffffff38; transform:translateY(-2px); }
 .profile-badge { display:grid; place-items:center; height:28px; min-width:36px; padding:0 5px; border-radius:7px; font-size:11px; font-weight:650; }

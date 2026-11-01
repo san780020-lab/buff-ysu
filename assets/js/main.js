@@ -183,8 +183,12 @@
       if (!safeAsset(poster.image) || !safeAsset(poster.thumb)) return;
       const card = element('article', 'poster-card');
       const button = element('button', 'poster-preview'); button.type = 'button'; button.setAttribute('aria-label', `放大查看${poster.title}`);
-      const image = element('img'); image.src = poster.thumb; image.alt = poster.title; image.width = poster.width; image.height = poster.height; image.loading = 'lazy'; image.decoding = 'async';
+      const image = element('img'); image.src = posterThumbnail(poster); image.alt = poster.title; image.width = poster.width; image.height = poster.height; image.loading = 'lazy'; image.decoding = 'async';
+      if (posterPlaceholder(poster)) image.style.backgroundImage = `url("${posterPlaceholder(poster)}")`;
+      image.addEventListener('error', () => { if(posterPlaceholder(poster)) image.src=posterPlaceholder(poster); }, {once:true});
       button.append(image, element('span', 'poster-expand', '放大查看 ↗')); button.addEventListener('click', () => openPoster(poster.id));
+      const warm = () => loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image), 'low').catch(() => {});
+      button.addEventListener('pointerenter', warm, {once:true}); button.addEventListener('focus', warm, {once:true});
       card.append(button, element('h4', '', poster.title), element('p', '', poster.description)); grid.append(card);
     });
     $('#poster-count').textContent = `共 ${posters.length} 张`;
@@ -199,12 +203,36 @@
   }
   $$('[data-material-stage]').forEach(button => button.addEventListener('click', () => setMaterialStage(button.dataset.materialStage)));
   const posterDialog = $('#poster-dialog');
+  const posterAssetCache = new Map();
+  let posterRequest = 0;
+  function posterThumbnail(poster) { return `${safeAsset(poster.thumb)}?v=20261101-fast`; }
+  function posterPlaceholder(poster) { return /^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(poster.placeholder || '') ? poster.placeholder : ''; }
+  function loadPosterAsset(src, priority = 'high') {
+    if (posterAssetCache.has(src)) { const entry=posterAssetCache.get(src); if(priority==='high') entry.image.fetchPriority='high'; return entry.promise; }
+    const image=new Image(); image.decoding='async'; image.fetchPriority=priority;
+    const promise=new Promise((resolve,reject) => {
+      image.onload=async () => { try { await image.decode(); } catch {} resolve(src); };
+      image.onerror=() => { posterAssetCache.delete(src); reject(new Error('Poster image unavailable')); };
+    });
+    posterAssetCache.set(src,{image,promise}); image.src=src; return promise;
+  }
   function setPoster(index) {
+    const request=++posterRequest; let quality=0;
     const total = content.posters.length; selectedPosterIndex = (index + total) % total;
     const poster = content.posters[selectedPosterIndex];
     $('#poster-dialog-title').textContent = poster.title;
     $('#poster-position').textContent = `${selectedPosterIndex + 1} / ${total} · 课程海报`;
-    const image = $('#poster-full-image'); image.src = safeAsset(poster.image); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
+    const image = $('#poster-full-image'); image.src = posterPlaceholder(poster) || posterThumbnail(poster); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
+    const status=$('#poster-load-status'); const retry=$('#poster-retry'); const viewer=$('.poster-viewer');
+    status.textContent='正在加载清晰预览…'; retry.hidden=true; viewer.setAttribute('aria-busy','true');
+    loadPosterAsset(posterThumbnail(poster)).then(src => { if(request===posterRequest && quality<1) { quality=1; image.src=src; } }).catch(() => {});
+    loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image)).then(src => {
+      if(request!==posterRequest) return;
+      quality=2; image.src=src; status.textContent='清晰预览已加载'; viewer.setAttribute('aria-busy','false');
+    }).catch(() => {
+      if(request!==posterRequest) return;
+      status.textContent='清晰图暂未加载，可重试或打开原图。'; retry.hidden=false; viewer.setAttribute('aria-busy','false');
+    });
     $('#poster-original').href = safeAsset(poster.image);
     $('.poster-viewer').classList.remove('is-zoomed');
     $('.poster-viewer').scrollTop = 0; $('.poster-viewer').scrollLeft = 0;
@@ -217,6 +245,8 @@
   }
   $('#poster-prev').addEventListener('click', () => setPoster(selectedPosterIndex - 1));
   $('#poster-next').addEventListener('click', () => setPoster(selectedPosterIndex + 1));
+  $('#poster-retry').addEventListener('click', () => setPoster(selectedPosterIndex));
+  posterDialog.addEventListener('close', () => { if(!posterDialog.open) posterRequest++; });
   $('#poster-zoom').addEventListener('click', () => {
     const zoomed = $('.poster-viewer').classList.toggle('is-zoomed');
     $('#poster-zoom').setAttribute('aria-pressed', String(zoomed));
