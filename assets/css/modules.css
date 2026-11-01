@@ -1,4 +1,9 @@
 html { scrollbar-gutter:stable; }
+.course-dialog[open] { display:flex; flex-direction:column; overflow:hidden; }
+.course-dialog-header { flex-shrink:0; display:flex; justify-content:space-between; align-items:center; gap:20px; padding:13px 18px 13px 27px; background:#1d202b; border-bottom:1px solid #ffffff10; }
+.course-dialog-header>span { color:#aab5c9; font-size:13px; }
+.course-dialog-header .dialog-close { position:static; flex-shrink:0; }
+.course-dialog .dialog-inner { overflow-y:auto; overscroll-behavior:contain; min-height:0; padding-top:27px; }
 .module-dialog { width:min(1320px,calc(100vw - 48px)); height:calc(100dvh - 64px); max-width:none; max-height:none; padding:0; border:1px solid #ffffff18; border-radius:23px; background:#161823; color:#f5f5f7; box-shadow:0 30px 120px #000b; overflow:hidden; }
 .module-dialog[open] { display:flex; flex-direction:column; }
 .module-dialog::backdrop { background:#04050bc9; backdrop-filter:blur(16px); }
@@ -9,6 +14,8 @@ html { scrollbar-gutter:stable; }
 .module-window-heading p { font-size:11px; color:#8d95a9; margin-top:7px; }
 .module-close,.module-back { width:38px; height:38px; border-radius:50%; background:#ffffff09; color:#a5adbf; font-size:25px; flex-shrink:0; display:grid; place-items:center; }
 .module-back { font-size:30px; }
+.module-back { padding:0; line-height:1; display:flex; align-items:center; justify-content:center; }
+.module-back svg { display:block; width:21px; height:21px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .module-back[hidden] { display:none; }
 .module-close:hover,.module-back:hover { background:#ffffff16; color:#fff; }
 .module-scroll { overflow-y:auto; overscroll-behavior:contain; flex:1; min-height:0; }

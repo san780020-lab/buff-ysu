@@ -1,0 +1,21 @@
+name: 发布每日宣传
+description: 机构账号粘贴文字与图片，提交后更新首页宣传。
+title: "[每日宣传] 更新首页"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        仅仓库所有者 san780020-lab 提交或编辑时发布。内容会公开展示。
+        第一行写标题，其余写正文；图片可直接粘贴、拖入或点击上传。等图片上传完成后再提交。
+        最新提交的内容替换首页宣传，不显示日期。修改这条 Issue 后保存也会重新发布。
+  - type: textarea
+    id: promotion
+    attributes:
+      label: 宣传内容
+      description: 第一行标题，空一行后写正文，再粘贴图片。请使用纯文字与图片。
+      placeholder: |
+        本期宣传标题
+
+        在这里粘贴正文，以及图片。
+    validations:
+      required: true

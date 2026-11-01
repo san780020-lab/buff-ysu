@@ -26,7 +26,11 @@
     return link;
   }
   function safeAsset(value) {
-    return /^assets\/(?:(?:posters|documents|images|books)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
+    return /^assets\/(?:(?:posters|documents|images|books|experiences|promotions)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
+  }
+  function safePromotionImage(value) {
+    if(safeAsset(value))return value;
+    try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password&&((url.hostname==='github.com'&&url.pathname.startsWith('/user-attachments/assets/'))||url.hostname==='user-images.githubusercontent.com')?url.href:'';}catch{return '';}
   }
   function assetLink(text, path, className) {
     const link = externalLink(text, safeAsset(path), className);
@@ -109,7 +113,7 @@
     renderCourses(); renderVideos();
   }
   const dialog = $('#course-dialog');
-  function openCourse(course) {
+  function renderCourseDetails(course) {
     $('#dialog-eyebrow').textContent = `${content.subjects[selectedSubject].label} / ${course.stageLabel}`;
     $('#dialog-title').textContent = course.title;
     $('#dialog-description').textContent = course.audience;
@@ -140,11 +144,11 @@
     if (safeAsset(course.document)) links.append(assetLink('打开 PDF 说明 ↗', course.document, 'text-link'));
     details.append(links);
     $('#dialog-notice').textContent = course.stage === 'reexam' ? '复试课程尚待更新，具体安排请咨询。' : `资料来源：${course.source}。价格、开课时间与优惠适用范围请在报名时确认。`;
-    dialog.showModal();
+
   }
+  function openCourse(course) { openModule('course',{courseID:course.id}); }
   $('.dialog-close').addEventListener('click', () => dialog.close());
   $('.dialog-contact').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } });
   $$('[data-subject]').forEach(tab => {
     tab.addEventListener('click', () => selectSubject(tab.dataset.subject));
     tab.addEventListener('keydown', event => {
@@ -221,6 +225,7 @@
     const total = content.posters.length; selectedPosterIndex = (index + total) % total;
     const poster = content.posters[selectedPosterIndex];
     $('#poster-dialog-title').textContent = poster.title;
+    if(currentModule==='poster'){$('#module-title').textContent=poster.title;$('#module-subtitle').textContent=`${selectedPosterIndex+1} / ${total} · 课程海报`;if(!moduleDialog.hidden){currentPageOptions={posterID:poster.id};history.replaceState({...history.state,options:currentPageOptions},'',pageURL('poster',currentPageOptions));}}
     $('#poster-position').textContent = `${selectedPosterIndex + 1} / ${total} · 课程海报`;
     const image = $('#poster-full-image'); image.src = posterPlaceholder(poster) || posterThumbnail(poster); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
     const status=$('#poster-load-status'); const retry=$('#poster-retry'); const viewer=$('.poster-viewer');
@@ -241,7 +246,7 @@
   function openPoster(id) {
     const index = (content.posters || []).findIndex(poster => poster.id === id);
     if (index < 0) return;
-    setPoster(index); posterDialog.showModal();
+    openModule('poster',{posterID:id});
   }
   $('#poster-prev').addEventListener('click', () => setPoster(selectedPosterIndex - 1));
   $('#poster-next').addEventListener('click', () => setPoster(selectedPosterIndex + 1));
@@ -257,16 +262,12 @@
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault(); setPoster(selectedPosterIndex + (event.key === 'ArrowLeft' ? -1 : 1));
   });
-  posterDialog.addEventListener('click', event => {
-    if (event.target !== posterDialog) return;
-    const rect = posterDialog.getBoundingClientRect();
-    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) posterDialog.close();
-  });
   $$('[data-poster-filter]').forEach(button => button.addEventListener('click', () => {
     selectedPosterFilter = button.dataset.posterFilter;
     $$('[data-poster-filter]').forEach(item => { const active = item === button; item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); });
     renderPosters();
   }));
+  document.addEventListener('buff:theme-menu-open',closeMenu);
   const menuButton = $('.menu-toggle');
   const navGroups = $$('[data-nav-group]');
   const wideNav = window.matchMedia('(min-width: 901px)');
@@ -298,6 +299,7 @@
     group.addEventListener('focusin', event => { if (wideNav.matches && event.target.matches(':focus-visible')) openMega(group); });
     group.addEventListener('focusout', event => { if (!group.contains(event.relatedTarget)) navCloseTimer = window.setTimeout(closeMega, 100); });
     group.querySelector('.nav-link').addEventListener('click', event => {
+      if(pointerType==='mouse')return;
       event.preventDefault(); event.stopPropagation();
       const tapToggle = pointerType === 'touch' || pointerType === 'pen';
       if (tapToggle && group.classList.contains('is-open')) closeMega(); else openMega(group);
@@ -358,7 +360,7 @@
     (content.textbooks || []).forEach(book => {
       const card = element('article','textbook-card');
       const visual = element('div','reference-cover');
-      if (safeAsset(book.image)) { const image=element('img'); image.src=book.image; image.alt=`${book.title}，${book.edition}教材封面`; image.width=190; image.height=250; visual.append(image); }
+      if (safeAsset(book.image)) { const image=element('img'); image.src=book.image; image.alt=`${book.title}，${book.edition}教材封面`; image.width=190; image.height=250; if(['drive','modern'].includes(book.coverStyle)) image.dataset.coverStyle=book.coverStyle; visual.append(image); }
       else { const placeholder=element('div','reference-cover-placeholder'); placeholder.append(element('strong','',book.title),element('span','','封面待补充')); visual.append(placeholder); }
       const text=element('div','reference-info');
       text.append(element('span','reference-tag',book.tag),element('h3','',book.title),element('p','reference-meta',`${book.edition} · ${book.author}`),element('p','reference-meta',book.publisher),element('p','reference-scope',book.scope));
@@ -378,6 +380,64 @@
       barRow.append(element('span','admission-bar-label',item.label),track,element('strong','admission-bar-value',item.joint?`${item.ordinary}＋${item.joint}`:String(item.ordinary))); chart.append(barRow);
     });
     chart.append(element('p','admission-chart-note','蓝色：电气 · 紫色：控制 · 青色：中澳联合培养；人数来自 2027 年官方拟招生目录。'));
+    const verification=$('#admissions-verification');
+    verification.replaceChildren(element('strong','','官网来源 · 人工核对后发布'),element('p','',`目录发布：${data.sourcePublishedAt}　最近核对：${data.verifiedAt}`),element('p','','由机构核对官网后手动更新。当前展示为已核对版本。'));
+    verification.append(externalLink('查看官方目录 ↗',safeURL(data.source),'text-link'));
+  }
+  function publishedUpdates(type) {
+    if(type==='promotions')return [...(content.promotions || [])].sort((a,b)=>Number(!!b.featured)-Number(!!a.featured));
+    return [...(type==='news' ? content.news || [] : content.promotions || [])]
+      .filter(item=>/^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date <= new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'}))
+      .sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned) || b.date.localeCompare(a.date));
+  }
+  function updateButton(item, compact=false) {
+    const button=element('button',compact?'update-list-item':'update-card'); button.type='button'; button.dataset.updateId=item.id;
+    const meta=element('span','update-meta');
+    meta.append(element('span','',item.pinned?'置顶 · '+item.category:item.category));
+    if(item.sourceLabel){const date=element('time','',item.date);date.dateTime=item.date;meta.append(date);}
+    button.append(meta,element('strong','',item.title));
+    if(!compact) button.append(element('p','',item.summary));
+    button.append(element('span','update-read','展开阅读 ›')); return button;
+  }
+  function renderUpdates() {
+    const news=publishedUpdates('news'),promotions=publishedUpdates('promotions');
+    $('#home-news-list').replaceChildren(...news.slice(0,3).map(item=>updateButton(item,true)));
+    const featured=promotions.find(item=>item.featured) || promotions[0];
+    $('#home-promotion').replaceChildren(...(featured?[updateButton(featured)]:[element('p','empty-state','机构动态待更新。')]));
+    const banner=$('#home-promotion-banner'); banner.replaceChildren();
+    if(featured){const text=element('div','promo-banner-copy');if(featured.images?.length && safePromotionImage(typeof featured.images[0]==='string'?featured.images[0]:featured.images[0].src)){const source=featured.images[0],image=element('img','promo-banner-image');image.src=typeof source==='string'?source:source.src;image.alt=source.alt || '宣传图片';image.width=90;image.height=90;banner.append(image);}text.append(element('span','','BUFF 每日宣传'),element('strong','',featured.title));const action=element('button','button outline','展开查看 ›');action.type='button';action.dataset.updateId=featured.id;banner.append(text,action);}
+    $('#news-list').replaceChildren(...news.map(item=>updateButton(item)));
+    $('#promotion-list').replaceChildren(...promotions.map(item=>updateButton(item)));
+    if(!news.length) $('#news-list').append(element('p','empty-state','暂未发布院校消息。'));
+  }
+  function renderExperiences() {
+    const grid=$('#experience-grid'); grid.replaceChildren();
+    (content.experiences || []).forEach(item=> {
+      const card=element('article','experience-card');
+      const preview=assetLink('',item.url,'experience-preview'); preview.setAttribute('aria-label',`阅读${item.title}`);
+      const image=element('img'); image.src=safeAsset(item.cover); image.alt=`${item.title}首页`; image.width=420; image.height=594; image.loading='lazy'; preview.append(image);
+      const info=element('div','experience-info');
+      info.append(element('p','update-meta',`${item.year} 届 · ${item.pages} 页 · ${item.size}`),element('h3','',item.title),element('p','',item.description));
+      const actions=element('div','update-actions');const download=assetLink('下载 PDF ↓',item.url,'text-link'); download.download=item.url.split('/').pop();
+      actions.append(assetLink('在线阅读 ›',item.url,'text-link'),download);info.append(actions);card.append(preview,info);grid.append(card);
+    });
+  }
+  function renderUpdateDetail(id) {
+    const isNews=(content.news || []).some(item=>item.id===id);
+    const item=publishedUpdates(isNews?'news':'promotions').find(item=>item.id===id);
+    if(!item) { moduleContent.append(element('p','empty-state','这条消息尚未发布。')); return; }
+    $('#module-title').textContent=isNews?'院校消息':'BUFF 每日宣传';
+    const article=element('article','update-detail container');
+    const meta=element('p','update-meta',`${item.category}${isNews?' · '+item.date+' · '+item.sourceLabel:' · BUFF 团队'}`);
+    article.append(meta,element('h2','',item.title),element('p','update-summary',item.summary));
+    (item.body || []).forEach(text=>article.append(element('p','update-paragraph',text)));
+    if(item.images?.length){const gallery=element('div','promotion-image-gallery');item.images.forEach((source,index)=>{const path=typeof source==='string'?source:source.src;if(!safePromotionImage(path))return;const image=element('img');image.src=safePromotionImage(path);image.alt=source.alt || `宣传图片 ${index+1}`;image.loading=index?'lazy':'eager';image.decoding='async';gallery.append(image);});article.append(gallery);}
+    const actions=element('div','update-actions');
+    if(item.module) { const button=element('button','button primary',item.actionLabel || '进一步了解'); button.type='button'; button.dataset.moduleOpen=item.module; actions.append(button); }
+    if(safeURL(item.url)) actions.append(externalLink('查看官网原公告 ↗',safeURL(item.url),'button outline'));
+    article.append(actions);
+    if(isNews) article.append(element('p','section-note',`本站核对：${item.reviewedAt}。公告日期按来源保留，重要报考事项以官方原公告及后续调整为准。`));
+    moduleContent.append(article);
   }
   const moduleDialog = $('#module-dialog');
   const moduleContent = $('#module-content');
@@ -390,21 +450,31 @@
     courses: { title:'课程与服务', subtitle:'按方向与备考阶段选择课程', sections:['courses'], subject:'all', filter:'all' },
     materials: { title:'课程资料', subtitle:'初试与复试资料分区查看', sections:['materials'] },
     daily: { title:'每日一题', subtitle:'公开看题，前往平台查看讲解', sections:['daily-question'] },
+    'daily-explanations': { title:'每日一题 · 题目讲解', subtitle:'每道题对应自己的 B 站或抖音视频', sections:['daily-explanations'] },
     videos: { title:'公开课与备考分享', subtitle:'试听、解题思路与备考经验', sections:['videos'] },
     about: { title:'关于 BUFF', subtitle:'电气与控制考研，两条专业路线', sections:['about'] },
     contact: { title:'联系咨询', subtitle:'桑桑哥与燕山大学考研交流群', sections:['contact'] },
     'control-demo': { title:'自动控制原理可视化', subtitle:'经典负反馈系统、阶跃响应与根轨迹', sections:['control-demo'] },
-    'source-analysis': { title:'生源分析', subtitle:'按年份、专业与录取口径呈现，数据待补充', sections:['source-analysis'] },
+    'source-analysis': { title:'生源分析', subtitle:'2027 届机构学员样本 · 仅展示学校层次与跨考匿名汇总', sections:['source-analysis'] },
     employment: { title:'就业去向', subtitle:'研究生行业、单位、地区与继续深造', sections:['employment'] },
     textbooks: { title:'参考教材与考试范围', subtitle:'2027 · 两方向共同参考书与控制方向的现代控制增量', sections:['textbooks'] },
     admissions: { title:'2027 年招生计划', subtitle:'电气与控制四类专业，普通培养与联合培养分列', sections:['admissions'] },
+    'admission-history': {title:'历年录取情况',subtitle:'2022—2025 · 电气工程 · 与 2027 拟招生计划分开展示',sections:['admission-history']},
+    experiences: {title:'上岸经验',subtitle:'2026 届经验分享 · 在线阅读与下载',sections:['experiences']},
+    news: { title:'院校消息', subtitle:'来自官网 · 保留原公告日期 · 核对后发布', sections:['news-center'] },
+    promotions: { title:'BUFF 每日宣传', subtitle:'机构发布的课程、资料、公开课与备考活动', sections:['promotion-center'] },
+    'update-detail': { title:'消息详情', subtitle:'展开查看，关闭后留在原位', sections:[] },
+    course: { title:'课程详情',subtitle:'班型、课程内容与配套服务',sections:['course-detail-content'] },
+    poster: {title:'课程海报',subtitle:'完整预览与放大阅读',sections:['poster-toolbar-content','poster-viewer-content']},
     pdf: { title:'课程 PDF 说明', subtitle:'在线预览与下载', sections:[] }
   };
-  const moduleRoutes = { preparation:'electrical', 'initial-study':'initial', reexamination:'reexam', courses:'courses', materials:'materials', 'reexam-materials':'materials', 'daily-question':'daily', videos:'videos', about:'about', contact:'contact', 'control-demo':'control-demo', 'source-analysis':'source-analysis', employment:'employment', textbooks:'textbooks', admissions:'admissions' };
+  const moduleRoutes = { preparation:'electrical', 'initial-study':'initial', reexamination:'reexam', courses:'courses', materials:'materials', 'reexam-materials':'materials', 'daily-question':'daily', 'daily-explanations':'daily-explanations', videos:'videos', about:'about', contact:'contact', 'control-demo':'control-demo', 'source-analysis':'source-analysis', employment:'employment', textbooks:'textbooks', admissions:'admissions', 'news-center':'news', 'promotion-center':'promotions', 'admission-history':'admission-history', experiences:'experiences' };
   let mountedSections = [];
-  let moduleHistory = [];
+  let currentPageOptions = {};
   let currentModule = null;
   let currentPDFPath = null;
+  let currentReaderObserver = null;
+  let currentUpdateID = null;
   let homeScroll = 0;
   function restoreSections() {
     mountedSections.forEach(({node,placeholder}) => placeholder.replaceWith(node)); mountedSections = [];
@@ -417,18 +487,25 @@
   function openModule(key, options = {}) {
     const config = modules[key]; if (!config) return;
     closeMenu();
-    if (dialog.open) dialog.close();
-    if (posterDialog.open) posterDialog.close();
-    if (!moduleDialog.open) { homeScroll = window.scrollY; window.scrollTo({top:homeScroll,left:0,behavior:'instant'}); moduleHistory = []; }
-    else if (currentModule && options.record !== false) moduleHistory.push({key:currentModule,subject:selectedSubject,filter:selectedFilter,stage:selectedMaterialStage,scroll:moduleScroll.scrollTop,pdfPath:currentPDFPath});
+    if (!currentModule) homeScroll=window.scrollY;
+    if (!options.fromHistory) {
+      history.replaceState({...history.state,buffPage:true,key:currentModule,options:currentPageOptions,scroll:window.scrollY},'',location.href);
+      const state={buffPage:true,key,options:{...options},scroll:0,depth:(history.state?.depth || 0)+(options.replace?0:1)};
+      if(options.replace)history.replaceState(state,'',pageURL(key,options));else history.pushState(state,'',pageURL(key,options));
+    }
+    posterRequest++;
+    currentReaderObserver?.disconnect(); currentReaderObserver=null;
     restoreSections(); moduleContent.replaceChildren();
-    currentModule = key; moduleDialog.dataset.module = key;
+    window.BUFF_RENDER_PAGE_NAV?.(key);
+    currentModule = key; currentPageOptions={...options}; delete currentPageOptions.fromHistory; moduleDialog.dataset.module = key;
     currentPDFPath = key === 'pdf' ? safeAsset(options.pdfPath) : null;
+    currentUpdateID = key === 'update-detail' ? options.updateID : null;
     $('#module-title').textContent = config.title; $('#module-subtitle').textContent = config.subtitle;
     $('#module-subject-switch').hidden = key !== 'courses';
     if (config.subject || options.subject) selectSubject(options.subject || config.subject);
     if (config.filter || options.filter) setCourseFilter(options.filter || config.filter);
     if (key === 'materials') setMaterialStage(options.stage || 'initial');
+    if(key==='course'){const course=content.courses.find(item=>item.id===options.courseID);if(course){if(course.subject!=='all')selectSubject(course.subject);renderCourseDetails(course);}}
     config.sections.forEach(id => {
       const node = document.getElementById(id); if (!node) return;
       const placeholder = element('div','module-placeholder'); placeholder.setAttribute('aria-hidden','true');
@@ -437,38 +514,88 @@
       node.before(placeholder); moduleContent.append(node); mountedSections.push({node,placeholder});
       node.querySelectorAll('.will-reveal').forEach(item => item.classList.add('is-visible'));
     });
+    if(key==='update-detail') renderUpdateDetail(currentUpdateID);
+    if(key==='poster'){const index=content.posters.findIndex(item=>item.id===options.posterID);setPoster(index<0?0:index);$('#module-title').textContent=content.posters[selectedPosterIndex].title;}
     if (key === 'pdf' && currentPDFPath) {
-      const info=(content.documents || []).find(item=>item.url===currentPDFPath);
+      const info=[...(content.documents || []),...(content.experiences || [])].find(item=>item.url===currentPDFPath);
       if(info) $('#module-title').textContent=info.title;
       const viewer=element('div','module-pdf-viewer');
-      const frame=element('iframe'); frame.src=currentPDFPath; frame.title=info?.title || '课程 PDF 说明';
-      const actions=element('div','module-pdf-actions');
       const download=assetLink('下载这份 PDF ↓',currentPDFPath,'text-link'); download.setAttribute('download',currentPDFPath.split('/').pop());
-      actions.append(element('span','','若浏览器不支持内嵌预览，可下载查看。'),download); viewer.append(frame,actions); moduleContent.append(viewer);
+      if(info?.pageImages?.length) {
+        viewer.classList.add('experience-reader');
+        const toolbar=element('div','reader-toolbar');
+        const label=element('label','','页码 '),pages=element('select');pages.setAttribute('aria-label','选择阅读页码');
+        info.pageImages.forEach((_,index)=>{const option=element('option','',`${index+1} / ${info.pages}`);option.value=index;pages.append(option);});label.append(pages);
+        const zoom=element('button','reader-zoom','放大阅读');zoom.type='button';zoom.setAttribute('aria-pressed','false');
+        zoom.addEventListener('click',()=>{const active=viewer.classList.toggle('is-zoomed');zoom.setAttribute('aria-pressed',String(active));zoom.textContent=active?'适合宽度':'放大阅读';});
+        toolbar.append(label,zoom,download);const pageList=element('div','experience-pages'),figures=[];
+        info.pageImages.forEach((src,index)=>{
+          if(!safeAsset(src))return;const figure=element('figure','experience-page');
+          const status=element('span','reader-page-status','正在加载页面…');
+          const image=element('img');image.src=src;image.alt=`${info.title} · 第 ${index+1} 页`;image.width=1600;image.height=2263;image.loading=index?'lazy':'eager';image.decoding='async';if(!index)image.fetchPriority='high';
+          const retry=element('button','reader-page-retry','此页暂未加载，点击重试');retry.type='button';retry.hidden=true;
+          image.addEventListener('error',()=>{retry.hidden=false;status.hidden=true;});image.addEventListener('load',()=>{retry.hidden=true;status.hidden=true;});
+          retry.addEventListener('click',()=>{image.src=src+'?retry='+Date.now();});
+          figure.append(image,status,retry,element('figcaption','',`${index+1} / ${info.pages} · 原文页码 ${info.sourcePages?.[index] || index+1}`));pageList.append(figure);figures.push(figure);
+        });
+        pages.addEventListener('change',()=>figures[Number(pages.value)]?.scrollIntoView({block:'start',behavior:'instant'}));
+        if('IntersectionObserver' in window){currentReaderObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting)pages.value=String(figures.indexOf(entry.target));});},{rootMargin:'-170px 0px -55% 0px',threshold:0});figures.forEach(figure=>currentReaderObserver.observe(figure));}
+        viewer.append(toolbar,element('p','reader-note','公开阅读版保留备考正文，聊天截图不公开。原文为中文。'),pageList);
+      } else {
+        const frame=element('iframe'); frame.src=currentPDFPath; frame.title=info?.title || '课程 PDF 说明';
+        const actions=element('div','module-pdf-actions');actions.append(element('span','','若浏览器不支持内嵌预览，可下载查看。'),download);viewer.append(frame,actions);
+      }
+      moduleContent.append(viewer);
     }
-    $('#module-back').hidden = !moduleHistory.length;
-    if (!moduleDialog.open) moduleDialog.showModal();
-    moduleScroll.scrollTop = options.scroll || 0;
-    $('.module-close').focus({preventScroll:true});
+    $('#module-back').hidden=false;
+    $('#main').hidden=true; moduleDialog.after($('.site-footer')); $('.site-footer').hidden=false; moduleDialog.hidden=false; document.body.classList.add('content-page-open');
+    window.scrollTo({top:options.scroll || 0,left:0,behavior:'instant'});
+    $('#module-title').tabIndex=-1; $('#module-title').focus({preventScroll:true});
+    window.requestAnimationFrame(()=>window.scrollTo({top:options.scroll || 0,left:0,behavior:'instant'}));
   }
-  $('.module-close').addEventListener('click', () => moduleDialog.close());
-  $('#module-back').addEventListener('click', () => {
-    const previous = moduleHistory.pop(); if (previous) openModule(previous.key,{...previous,record:false});
-  });
-  moduleDialog.addEventListener('close', () => {
-    if (moduleDialog.open) return;
-    restoreSections(); moduleContent.replaceChildren(); closeMenu(); currentModule = null; currentPDFPath = null; moduleHistory = [];
-    const savedScroll = homeScroll;
-    window.scrollTo({top:savedScroll,left:0,behavior:'instant'});
-    window.requestAnimationFrame(() => window.scrollTo({top:savedScroll,left:0,behavior:'instant'}));
-  });
-  moduleDialog.addEventListener('click', event => {
-    if (event.target !== moduleDialog) return;
-    const rect = moduleDialog.getBoundingClientRect();
-    if (event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom) moduleDialog.close();
-  });
+  function pageURL(key,options={}) {
+    let route=key;
+    if(key==='course')route='course/'+options.courseID;
+    if(key==='poster')route='posters/'+options.posterID;
+    if(key==='update-detail')route='updates/'+options.updateID;
+    if(key==='pdf')route='read/'+(options.pdfPath || '').split('/').pop().replace(/\.pdf$/,'');
+    if(key==='materials' && options.stage==='reexam')route='reexam-materials';
+    return location.pathname+location.search+'#/'+route;
+  }
+  function parsePageHash() {
+    const route=decodeURIComponent(location.hash.replace(/^#\/?/,'')),parts=route.split('/');
+    if(parts[0]==='course'&&content.courses.some(item=>item.id===parts[1]))return{key:'course',options:{courseID:parts[1]}};
+    if(parts[0]==='posters'&&content.posters.some(item=>item.id===parts[1]))return{key:'poster',options:{posterID:parts[1]}};
+    if(parts[0]==='updates')return{key:'update-detail',options:{updateID:parts[1]}};
+    if(parts[0]==='read'){const doc=[...content.documents,...(content.experiences || [])].find(item=>item.url.split('/').pop()===parts[1]+'.pdf');if(doc)return{key:'pdf',options:{pdfPath:doc.url}};}
+    if(route==='reexam-materials')return{key:'materials',options:{stage:'reexam'}};
+    const key=modules[route]?route:moduleRoutes[route];return key?{key,options:{}}:null;
+  }
+  function showHome(options={}) {
+    currentReaderObserver?.disconnect();currentReaderObserver=null;
+    if(!options.fromHistory){history.replaceState({...history.state,buffPage:true,key:currentModule,options:currentPageOptions,scroll:window.scrollY},'',location.href);history.pushState({buffPage:true,key:null,depth:(history.state?.depth || 0)+1,scroll:homeScroll},'',location.pathname+location.search);}
+    posterRequest++; restoreSections(); moduleContent.replaceChildren(); closeMenu(); currentModule=null;currentPageOptions={};currentPDFPath=null;currentUpdateID=null;
+    moduleDialog.hidden=true;$('#main').hidden=false;$('.site-footer').hidden=false;document.body.classList.remove('content-page-open');
+    window.scrollTo({top:options.scroll ?? homeScroll,left:0,behavior:'instant'});window.requestAnimationFrame(()=>window.scrollTo({top:options.scroll ?? homeScroll,left:0,behavior:'instant'}));
+  }
+  $('.module-close').addEventListener('click',()=>showHome());
+  $('#module-back').addEventListener('click',()=>{if(history.state?.depth>0)history.back();else showHome();});
+  function restoreURL(event) {
+    const parsed=parsePageHash(),state=history.state;
+    if(parsed){
+      if(event.type==='hashchange' && currentModule===parsed.key && pageURL(currentModule,currentPageOptions)===pageURL(parsed.key,parsed.options))return;
+      const matches=state?.buffPage && state.key===parsed.key && pageURL(state.key,state.options || {})===pageURL(parsed.key,parsed.options);
+      openModule(parsed.key,{...parsed.options,scroll:matches?state.scroll:0,fromHistory:true});
+    } else showHome({fromHistory:true,scroll:state?.key===null?state.scroll || 0:0});
+  }
+  window.addEventListener('popstate',restoreURL);
+  window.addEventListener('hashchange',restoreURL);
+  if('ResizeObserver' in window)new ResizeObserver(entries=>{document.documentElement.style.setProperty('--page-bar-height',entries[0].target.getBoundingClientRect().height+'px');}).observe($('.module-window-header'));
   $$('[data-route-subject]').forEach(button => button.addEventListener('click', () => selectSubject(button.dataset.routeSubject)));
   document.addEventListener('click', event => {
+    if(event.target.closest('[data-scroll-top]')){window.scrollTo({top:0,behavior:'smooth'});return;}
+    const update=event.target.closest('[data-update-id]');
+    if(update) { event.preventDefault(); openModule('update-detail',{updateID:update.dataset.updateId}); return; }
     const pdfLink=event.target.closest('a[data-pdf-view]:not([download])');
     if(pdfLink) { event.preventDefault(); openModule('pdf',{pdfPath:pdfLink.dataset.pdfView}); return; }
     const anchor = event.target.closest('a[href^="#"]');
@@ -476,6 +603,7 @@
     let key, stage, subject;
     if (anchor) {
       const route = anchor.getAttribute('href').slice(1);
+      if((route==='main'||!route) && currentModule){event.preventDefault();showHome();return;}
       key = moduleRoutes[route]; subject = anchor.dataset.selectSubject;
       if (subject && (route === 'preparation' || route === 'courses')) key = subject;
       stage = route === 'reexam-materials' ? 'reexam' : anchor.dataset.stage;
@@ -486,6 +614,19 @@
 
   function renderDaily() {
     const questions = [...(content.dailyQuestions || [])].sort((a,b) => String(b.date).localeCompare(String(a.date)));
+    const lectures=$('#daily-explanations-grid'); lectures.replaceChildren();
+    questions.forEach(question => {
+      const card=element('article','daily-lecture-card');
+      card.append(element('p','update-meta',`${question.date || ''} · ${question.subject || '每日一题'}`),element('h3','',question.title));
+      const actions=element('div','update-actions'); let links=0;
+      for(const [key,name] of [['bilibili','B 站看本题讲解 ↗'],['douyin','抖音看本题讲解 ↗']]) {
+        const url=safeURL(question[key]); if(url) { actions.append(externalLink(name,url,'button outline')); links++; }
+      }
+      if(!links) card.append(element('p','updates-explainer','本题讲解视频待更新。'));
+      const view=element('button','text-link','查看这道题 ›'); view.type='button'; view.addEventListener('click',()=>{openModule('daily');show(question);});
+      card.append(actions,view); lectures.append(card);
+    });
+    if(!questions.length) lectures.append(element('div','empty-state','每日一题讲解待更新，视频将按题目逐条发布。'));
     if (!questions.length) return;
     const target = $('#daily-content');
     function show(question) {
@@ -499,22 +640,36 @@
         questions.forEach(item=> { const option=element('option','',`${item.date} · ${item.title}`); option.value=item.id; option.selected=item.id===question.id; select.append(option); });
         select.addEventListener('change',()=>show(questions.find(item=>item.id===select.value))); label.append(select); body.append(label);
       }
-      const answer=element('div','daily-answer-panel'); answer.append(element('span','','跟着讲解，再想深一层。'),element('h3','','看题，也看思路。'));
+      const answer=element('div','daily-answer-panel'); answer.append(element('span','','题目与解析，同一个视频。'),element('h3','','跟着这期视频，一起想明白。'));
       let links=0;
-      for(const [key,name] of [['bilibili','前往 B 站看讲解 ↗'],['douyin','前往抖音看讲解 ↗']]) { const url=safeURL(question[key]); if(url) { answer.append(externalLink(name,url,'text-link')); links++; } }
+      for(const [key,name] of [['bilibili','B 站看本期题目与解析 ↗'],['douyin','抖音看本期题目与解析 ↗']]) { const url=safeURL(question[key]); if(url) { answer.append(externalLink(name,url,'text-link')); links++; } }
       if(!links) answer.append(element('p','','本题视频讲解待更新。'));
       const profiles=element('div','profile-links'); fillProfileLinks(profiles); answer.append(profiles);
       target.replaceChildren(body,answer);
     }
     show(questions[0]);
   }
-  selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily(); renderTextbooks(); renderAdmissions();
+  selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily(); renderTextbooks(); renderAdmissions(); renderUpdates(); renderExperiences();
+  fetch('assets/data/daily-promotion.txt',{cache:'no-cache'}).then(response=>{if(!response.ok)throw new Error('Promotion unavailable');return response.text();}).then(text=>{
+    const lines=text.trim().split(/\r?\n/),title=lines.shift()?.trim();if(!title)return;
+    const body=lines.join('\n').trim().split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);
+    content.promotions.forEach(item=>item.featured=false);
+    content.promotions.unshift({id:'daily-pasted',category:'机构宣传',title,summary:body[0] || '',body:body.slice(1),module:'contact',actionLabel:'联系咨询',featured:true,images:window.BUFF_PROMOTION_IMAGES || []});
+    renderUpdates();if(currentModule==='update-detail'&&currentUpdateID==='daily-pasted'){moduleContent.replaceChildren();renderUpdateDetail(currentUpdateID);}
+  }).catch(()=>{});
+  fetch('assets/data/daily-promotion-images.json',{cache:'no-cache'}).then(response=>response.ok?response.json():[]).then(images=>{
+    if(!Array.isArray(images))return;images=images.filter(image=>safePromotionImage(typeof image==='string'?image:image?.src));const latest=content.promotions.find(item=>item.id==='daily-pasted');if(latest)latest.images=images;
+    window.BUFF_PROMOTION_IMAGES=images;
+    renderUpdates();
+    if(currentModule==='update-detail'&&currentUpdateID==='daily-pasted'){moduleContent.replaceChildren();renderUpdateDetail(currentUpdateID);}
+  }).catch(()=>{});
   $$('[data-profile-links]').forEach(fillProfileLinks);
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { threshold:.08 });
     $$('.showcase-card,.section-top').forEach(node => { node.classList.add('will-reveal'); observer.observe(node); });
   }
   $('#copyright-year').textContent = String(new Date().getFullYear());
-  const initialRoute = window.location.hash.slice(1);
-  if (moduleRoutes[initialRoute]) openModule(moduleRoutes[initialRoute], {stage:initialRoute==='reexam-materials'?'reexam':undefined});
+  const initialPage=parsePageHash();
+  history.replaceState({buffPage:true,key:null,depth:0,scroll:0},'',location.href);
+  if(initialPage)openModule(initialPage.key,{...initialPage.options,replace:true});
 })();

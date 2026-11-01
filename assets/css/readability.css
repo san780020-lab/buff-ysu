@@ -1,0 +1,43 @@
+/* Explicit surface/text pairs prevent dark styles leaking into the light theme. */
+.admissions-table { font-size:16px; font-variant-numeric:tabular-nums; }
+.admissions-table th { font-size:14px; font-weight:600; color:#c6d2e6; }
+.admissions-table td { color:#e3e9f5; }
+.admissions-table td:last-child { font-weight:650; }
+.admissions-table tbody tr:nth-child(even) { background:#ffffff04; }
+.history-value { font-size:18px; font-weight:650; }
+.history-stack>span { font-size:14px; font-weight:600; }
+.eyebrow,.section-eyebrow { color:#a8b4c9; }
+.about-brands span { color:#52627b; }
+.content-page #module-title:focus { outline:none; }
+html[data-language="en"] .page-chapter { flex-basis:146px; }
+.dialog-inner .detail-heading { color:#e1e7f3; font-size:19px; font-weight:600; }
+.detail-price-row strong { color:#e1e7f3; font-size:16px; }
+.dialog-inner>p:not(.eyebrow) { color:var(--text-body); }
+html[data-theme="light"] :is(.detail-prices,.detail-offer) { background:#e9eff8; color:#334660; border:1px solid #d5dfed; }
+html[data-theme="light"] .detail-price-row { border-color:#d0dbe9; }
+html[data-theme="light"] :is(.detail-price-row strong,.dialog-inner .detail-heading) { color:#24354f; }
+html[data-theme="light"] .detail-price-row p { color:#465870; }
+html[data-theme="light"] .dialog-notice { color:#52637a; border-color:#d4dce8; }
+html[data-theme="light"] :is(.eyebrow,.section-eyebrow,.poster-section-top>span,.about-brands span) { color:#52627b; }
+html[data-theme="light"] :is(.section-top a,.section-note a,.reference-meta a,.admissions-source a) { color:#075eba; }
+html[data-theme="light"] .skip-link { background:#fff; color:#075eba; }
+.button.primary { background:#1763c9; color:#fff; }
+html[data-theme="light"] .admissions-table { background:#fff; }
+html[data-theme="light"] .admissions-table td { color:#28374c; }
+html[data-theme="light"] .admissions-table th { color:#253951; background:#e5edf8; }
+html[data-theme="light"] .admissions-table tbody tr:nth-child(even) { background:#f3f6fb; }
+html[data-theme="light"] .history-value { fill:#263d60; }
+.theme-toggle { display:flex; align-items:center; justify-content:center; gap:7px; width:auto; padding:0 10px; border-radius:20px; font-size:12px; }
+.language-toggle { order:2; height:36px; min-width:37px; padding:0 7px; border:1px solid #ffffff20; border-radius:18px; color:#e4e9f3; font-size:12px; background:#ffffff08; flex-shrink:0; }
+html[data-theme="light"] .language-toggle { color:#263449; border-color:#00000018; background:#00000004; }
+.visit-stat { font-size:13px; color:var(--text-secondary,#acb8cf); font-variant-numeric:tabular-nums; }
+.experience-page { position:relative; }
+.reader-page-status { position:absolute; top:110px; left:0; right:0; text-align:center; color:#4d607d; font-size:14px; }
+.reader-page-status[hidden] { display:none; }
+.publish-promotion { font-size:13px; color:var(--blue,#88b5ff); white-space:nowrap; }
+.footer-main { flex-wrap:wrap; }
+html[data-language="en"] .main-nav { gap:10px; }
+html[data-language="en"] .nav-link,html[data-language="en"] .nav-contact { font-size:11px; }
+@media(max-width:640px){.header-inner{gap:7px}.brand strong span{display:none}.theme-toggle{padding:0 8px;gap:5px}.theme-toggle svg{width:16px}.admissions-table th,.admissions-table td{padding:15px 14px}.admissions-table{font-size:14px}.footer-main{gap:20px}}
+
+html[data-theme="light"] :is(.textbooks-section,.admissions-section,.initial-section) .section-note a { color:#075eba; }
