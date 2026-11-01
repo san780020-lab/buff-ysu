@@ -37,7 +37,7 @@ html[data-theme="light"] .language-toggle { color:#263449; border-color:#0000001
 .publish-promotion { font-size:13px; color:var(--blue,#88b5ff); white-space:nowrap; }
 .footer-main { flex-wrap:wrap; }
 html[data-language="en"] .main-nav { gap:10px; }
-html[data-language="en"] .nav-link,html[data-language="en"] .nav-contact { font-size:11px; }
+@media(min-width:901px){html[data-language="en"] .nav-link,html[data-language="en"] .nav-contact { font-size:11px; }}
 @media(max-width:640px){.header-inner{gap:7px}.brand strong span{display:none}.theme-toggle{padding:0 8px;gap:5px}.theme-toggle svg{width:16px}.admissions-table th,.admissions-table td{padding:15px 14px}.admissions-table{font-size:14px}.footer-main{gap:20px}}
 
 html[data-theme="light"] :is(.textbooks-section,.admissions-section,.initial-section) .section-note a { color:#075eba; }
