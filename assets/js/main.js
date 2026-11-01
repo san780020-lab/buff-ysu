@@ -6,6 +6,7 @@
   let selectedFilter = 'all';
   let selectedPosterFilter = 'all';
   let selectedPosterIndex = 0;
+  let selectedMaterialStage = 'initial';
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -25,16 +26,17 @@
     return link;
   }
   function safeAsset(value) {
-    return /^assets\/(?:posters|documents|images)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)$/i.test(value || '') ? value : '';
+    return /^assets\/(?:posters|documents|images|books)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)$/i.test(value || '') ? value : '';
   }
   function assetLink(text, path, className) {
     const link = externalLink(text, safeAsset(path), className);
+    if (/\.pdf$/i.test(path || '')) link.dataset.pdfView = path;
     return link;
   }
   function renderCourses() {
     const grid = $('#course-grid');
     grid.replaceChildren();
-    const visible = content.courses.filter(course => (selectedFilter === 'all' || course.stage === selectedFilter) && (!course.subject || course.subject === 'all' || course.subject === selectedSubject));
+    const visible = content.courses.filter(course => (selectedFilter === 'all' || course.stage === selectedFilter) && (selectedSubject === 'all' || !course.subject || course.subject === 'all' || course.subject === selectedSubject) && !(selectedFilter === 'all' && course.status === '待更新'));
     for (const course of visible) {
       const card = element('article', 'course-card');
       const top = element('div', 'course-top');
@@ -76,7 +78,8 @@
     $$('[data-subject]').forEach(tab => { const active = tab.dataset.subject === subject; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; });
     const data = content.subjects[subject];
     $('#subject-tag').textContent = data.tag; $('#subject-name').textContent = data.title; $('#subject-description').textContent = data.description;
-    $('#subject-panel').setAttribute('aria-labelledby', `tab-${subject}`);
+    $('#subject-panel').setAttribute('aria-labelledby', $(`#tab-${subject}`) ? `tab-${subject}` : 'preparation-title');
+    $$('[data-route-subject]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.routeSubject === subject)));
     renderCourses(); renderVideos();
   }
   const dialog = $('#course-dialog');
@@ -134,7 +137,7 @@
 
   function renderDocuments() {
     const grid = $('#document-grid'); grid.replaceChildren();
-    (content.documents || []).forEach(document => {
+    (content.documents || []).filter(document => (document.stage || 'initial') === selectedMaterialStage).forEach(document => {
       if (!safeAsset(document.url)) return;
       const card = element('article', 'document-card');
       const body = element('div', 'document-card-body');
@@ -144,10 +147,12 @@
       actions.append(assetLink('在线查看 ↗', document.url, 'text-link'), download);
       card.append(body, actions); grid.append(card);
     });
+    if (!grid.children.length) grid.append(element('p', 'empty-state', '复试课程与资料将在提供后单独更新。'));
+    $('#document-note').textContent = selectedMaterialStage === 'initial' ? '初试 PDF 为课程与资料说明公开摘页，页码范围见下载卡片。' : '目前上传的海报与 PDF 均为初试资料，复试资料尚待补充。';
   }
   function renderPosters() {
     const grid = $('#poster-grid'); grid.replaceChildren();
-    const posters = (content.posters || []).filter(poster => selectedPosterFilter === 'all' || poster.group === selectedPosterFilter);
+    const posters = (content.posters || []).filter(poster => (poster.stage || 'initial') === selectedMaterialStage && (selectedPosterFilter === 'all' || poster.group === selectedPosterFilter));
     posters.forEach(poster => {
       if (!safeAsset(poster.image) || !safeAsset(poster.thumb)) return;
       const card = element('article', 'poster-card');
@@ -157,7 +162,16 @@
       card.append(button, element('h4', '', poster.title), element('p', '', poster.description)); grid.append(card);
     });
     $('#poster-count').textContent = `共 ${posters.length} 张`;
+    if (!posters.length) grid.append(element('p', 'empty-state', selectedMaterialStage === 'reexam' ? '复试海报待更新。' : '该分类暂无海报。'));
   }
+  function setMaterialStage(stage) {
+    selectedMaterialStage = stage === 'reexam' ? 'reexam' : 'initial'; selectedPosterFilter = 'all';
+    $$('[data-material-stage]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.materialStage === selectedMaterialStage)));
+    $$('[data-material-stage]').forEach(button => button.classList.toggle('active', button.dataset.materialStage === selectedMaterialStage));
+    $$('[data-poster-filter]').forEach(button => { const active = button.dataset.posterFilter === 'all'; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active)); });
+    renderDocuments(); renderPosters();
+  }
+  $$('[data-material-stage]').forEach(button => button.addEventListener('click', () => setMaterialStage(button.dataset.materialStage)));
   const posterDialog = $('#poster-dialog');
   function setPoster(index) {
     const total = content.posters.length; selectedPosterIndex = (index + total) % total;
@@ -276,6 +290,137 @@
     if (contact.qrImage && /^(?:\.\/)?assets\/images\/[\w./-]+\.(?:png|jpe?g|webp)$/i.test(contact.qrImage) && !contact.qrImage.includes('..')) { const img = element('img', 'contact-qr'); img.src = contact.qrImage; img.alt = 'BUFF 机构咨询二维码'; img.width = 128; img.height = 128; nodes.push(img); }
     if (nodes.length) target.replaceChildren(...nodes);
   }
+  function renderTextbooks() {
+    const grid = $('#textbook-grid'); grid.replaceChildren();
+    (content.textbooks || []).forEach(book => {
+      const card = element('article','textbook-card');
+      const visual = element('div','reference-cover');
+      if (safeAsset(book.image)) { const image=element('img'); image.src=book.image; image.alt=`${book.title}，${book.edition}教材封面`; image.width=190; image.height=250; visual.append(image); }
+      else { const placeholder=element('div','reference-cover-placeholder'); placeholder.append(element('strong','',book.title),element('span','','封面待补充')); visual.append(placeholder); }
+      const text=element('div','reference-info');
+      text.append(element('span','reference-tag',book.tag),element('h3','',book.title),element('p','reference-meta',`${book.edition} · ${book.author}`),element('p','reference-meta',book.publisher),element('p','reference-scope',book.scope));
+      card.append(visual,text); grid.append(card);
+    });
+  }
+  function renderAdmissions() {
+    const data=content.admissions; if (!data) return;
+    const tbody=$('#admissions-table-body'); const chart=$('#admissions-chart'); tbody.replaceChildren(); chart.replaceChildren();
+    const max=Math.max(...data.programs.map(item=>item.ordinary+item.joint));
+    data.programs.forEach(item=> {
+      const row=element('tr');
+      [item.code,item.name,item.degree,item.exam,String(item.ordinary),item.joint?String(item.joint):'—'].forEach(value=>row.append(element('td','',value))); tbody.append(row);
+      const barRow=element('div','admission-bar-row'); const track=element('div','admission-track');
+      const ordinary=element('span',item.exam==='830'?'admission-fill control-fill':'admission-fill'); ordinary.style.width=`${item.ordinary/max*100}%`; track.append(ordinary);
+      if(item.joint) { const joint=element('span','admission-fill joint-fill'); joint.style.width=`${item.joint/max*100}%`; track.append(joint); }
+      barRow.append(element('span','admission-bar-label',item.label),track,element('strong','admission-bar-value',item.joint?`${item.ordinary}＋${item.joint}`:String(item.ordinary))); chart.append(barRow);
+    });
+    chart.append(element('p','admission-chart-note','蓝色：电气 · 紫色：控制 · 青色：中澳联合培养；人数来自 2027 年官方拟招生目录。'));
+  }
+  const moduleDialog = $('#module-dialog');
+  const moduleContent = $('#module-content');
+  const moduleScroll = $('#module-scroll');
+  const modules = {
+    electrical: { title:'电气考研', subtitle:'806 · 经典自控＋直流调速', sections:['preparation','courses'], subject:'electrical', filter:'initial' },
+    control: { title:'控制考研', subtitle:'830 · 经典自控＋现代控制＋直流拖动控制系统', sections:['preparation','courses'], subject:'control', filter:'initial' },
+    initial: { title:'初试备考', subtitle:'科目区别、课程与配套资料', sections:['initial-study','courses'], subject:'all', filter:'initial' },
+    reexam: { title:'复试准备', subtitle:'专业课、英语表达、综合面试与复试资料，单独更新', sections:['reexamination','courses'], subject:'all', filter:'reexam' },
+    courses: { title:'课程与服务', subtitle:'按方向与备考阶段选择课程', sections:['courses'], subject:'all', filter:'all' },
+    materials: { title:'课程资料', subtitle:'初试与复试资料分区查看', sections:['materials'] },
+    daily: { title:'每日一题', subtitle:'公开看题，前往平台查看讲解', sections:['daily-question'] },
+    videos: { title:'公开课与备考分享', subtitle:'试听、解题思路与备考经验', sections:['videos'] },
+    about: { title:'关于 BUFF', subtitle:'电气与控制考研，两条专业路线', sections:['about'] },
+    contact: { title:'联系咨询', subtitle:'桑桑哥与燕山大学考研交流群', sections:['contact'] },
+    'control-demo': { title:'自动控制原理可视化', subtitle:'经典负反馈系统、阶跃响应与根轨迹', sections:['control-demo'] },
+    'source-analysis': { title:'生源分析', subtitle:'按年份、专业与录取口径呈现，数据待补充', sections:['source-analysis'] },
+    employment: { title:'就业去向', subtitle:'研究生行业、单位、地区与继续深造', sections:['employment'] },
+    textbooks: { title:'参考教材与考试范围', subtitle:'2027 · 两方向共同参考书与控制方向的现代控制增量', sections:['textbooks'] },
+    admissions: { title:'2027 年招生计划', subtitle:'电气与控制四类专业，普通培养与联合培养分列', sections:['admissions'] },
+    pdf: { title:'课程 PDF 说明', subtitle:'在线预览与下载', sections:[] }
+  };
+  const moduleRoutes = { preparation:'electrical', 'initial-study':'initial', reexamination:'reexam', courses:'courses', materials:'materials', 'reexam-materials':'materials', 'daily-question':'daily', videos:'videos', about:'about', contact:'contact', 'control-demo':'control-demo', 'source-analysis':'source-analysis', employment:'employment', textbooks:'textbooks', admissions:'admissions' };
+  let mountedSections = [];
+  let moduleHistory = [];
+  let currentModule = null;
+  let currentPDFPath = null;
+  let homeScroll = 0;
+  function restoreSections() {
+    mountedSections.forEach(({node,placeholder}) => placeholder.replaceWith(node)); mountedSections = [];
+  }
+  function setCourseFilter(value) {
+    selectedFilter = value;
+    $$('[data-filter]').forEach(button => { const active = button.dataset.filter === value; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active)); });
+    renderCourses();
+  }
+  function openModule(key, options = {}) {
+    const config = modules[key]; if (!config) return;
+    closeMenu();
+    if (dialog.open) dialog.close();
+    if (posterDialog.open) posterDialog.close();
+    if (!moduleDialog.open) { homeScroll = window.scrollY; window.scrollTo({top:homeScroll,left:0,behavior:'instant'}); moduleHistory = []; }
+    else if (currentModule && options.record !== false) moduleHistory.push({key:currentModule,subject:selectedSubject,filter:selectedFilter,stage:selectedMaterialStage,scroll:moduleScroll.scrollTop,pdfPath:currentPDFPath});
+    restoreSections(); moduleContent.replaceChildren();
+    currentModule = key; moduleDialog.dataset.module = key;
+    currentPDFPath = key === 'pdf' ? safeAsset(options.pdfPath) : null;
+    $('#module-title').textContent = config.title; $('#module-subtitle').textContent = config.subtitle;
+    $('#module-subject-switch').hidden = key !== 'courses';
+    if (config.subject || options.subject) selectSubject(options.subject || config.subject);
+    if (config.filter || options.filter) setCourseFilter(options.filter || config.filter);
+    if (key === 'materials') setMaterialStage(options.stage || 'initial');
+    config.sections.forEach(id => {
+      const node = document.getElementById(id); if (!node) return;
+      const placeholder = element('div','module-placeholder'); placeholder.setAttribute('aria-hidden','true');
+      const hidden = node.closest('#module-store');
+      if (hidden) placeholder.hidden = true; else placeholder.style.height = `${node.getBoundingClientRect().height}px`;
+      node.before(placeholder); moduleContent.append(node); mountedSections.push({node,placeholder});
+      node.querySelectorAll('.will-reveal').forEach(item => item.classList.add('is-visible'));
+    });
+    if (key === 'pdf' && currentPDFPath) {
+      const info=(content.documents || []).find(item=>item.url===currentPDFPath);
+      if(info) $('#module-title').textContent=info.title;
+      const viewer=element('div','module-pdf-viewer');
+      const frame=element('iframe'); frame.src=currentPDFPath; frame.title=info?.title || '课程 PDF 说明';
+      const actions=element('div','module-pdf-actions');
+      const download=assetLink('下载这份 PDF ↓',currentPDFPath,'text-link'); download.setAttribute('download',currentPDFPath.split('/').pop());
+      actions.append(element('span','','若浏览器不支持内嵌预览，可下载查看。'),download); viewer.append(frame,actions); moduleContent.append(viewer);
+    }
+    $('#module-back').hidden = !moduleHistory.length;
+    if (!moduleDialog.open) moduleDialog.showModal();
+    moduleScroll.scrollTop = options.scroll || 0;
+    $('.module-close').focus({preventScroll:true});
+  }
+  $('.module-close').addEventListener('click', () => moduleDialog.close());
+  $('#module-back').addEventListener('click', () => {
+    const previous = moduleHistory.pop(); if (previous) openModule(previous.key,{...previous,record:false});
+  });
+  moduleDialog.addEventListener('close', () => {
+    if (moduleDialog.open) return;
+    restoreSections(); moduleContent.replaceChildren(); closeMenu(); currentModule = null; currentPDFPath = null; moduleHistory = [];
+    const savedScroll = homeScroll;
+    window.scrollTo({top:savedScroll,left:0,behavior:'instant'});
+    window.requestAnimationFrame(() => window.scrollTo({top:savedScroll,left:0,behavior:'instant'}));
+  });
+  moduleDialog.addEventListener('click', event => {
+    if (event.target !== moduleDialog) return;
+    const rect = moduleDialog.getBoundingClientRect();
+    if (event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom) moduleDialog.close();
+  });
+  $$('[data-route-subject]').forEach(button => button.addEventListener('click', () => selectSubject(button.dataset.routeSubject)));
+  document.addEventListener('click', event => {
+    const pdfLink=event.target.closest('a[data-pdf-view]:not([download])');
+    if(pdfLink) { event.preventDefault(); openModule('pdf',{pdfPath:pdfLink.dataset.pdfView}); return; }
+    const anchor = event.target.closest('a[href^="#"]');
+    const trigger = event.target.closest('[data-module-open]');
+    let key, stage, subject;
+    if (anchor) {
+      const route = anchor.getAttribute('href').slice(1);
+      key = moduleRoutes[route]; subject = anchor.dataset.selectSubject;
+      if (subject && (route === 'preparation' || route === 'courses')) key = subject;
+      stage = route === 'reexam-materials' ? 'reexam' : anchor.dataset.stage;
+    } else if (trigger) { key = trigger.dataset.moduleOpen; stage = trigger.dataset.stage; subject = trigger.dataset.subject; }
+    if (!key) return;
+    event.preventDefault(); openModule(key,{stage,subject});
+  });
+
   function renderDaily() {
     const questions = [...(content.dailyQuestions || [])].sort((a,b) => String(b.date).localeCompare(String(a.date)));
     if (!questions.length) return;
@@ -299,10 +444,12 @@
     }
     show(questions[0]);
   }
-  selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily();
+  selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily(); renderTextbooks(); renderAdmissions();
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { threshold:.08 });
     $$('.showcase-card,.section-top').forEach(node => { node.classList.add('will-reveal'); observer.observe(node); });
   }
   $('#copyright-year').textContent = String(new Date().getFullYear());
+  const initialRoute = window.location.hash.slice(1);
+  if (moduleRoutes[initialRoute]) openModule(moduleRoutes[initialRoute], {stage:initialRoute==='reexam-materials'?'reexam':undefined});
 })();

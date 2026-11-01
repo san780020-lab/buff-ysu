@@ -2,15 +2,16 @@
 // 后续直接修改本文件；站外链接使用完整 https:// 地址。
 window.BUFF_CONTENT = {
   subjects: {
+    all: { label: '全部方向', tag: 'ELECTRICAL & CONTROL', title: '两条路线，清楚区分。', description: '电气：经典自控＋直流调速。控制：经典自控＋现代控制＋直流拖动控制系统。' },
     electrical: {
-      label: '电气考研', tag: 'ELECTRICAL / 806',
-      title: '电气方向\n自控与运控，循序推进。',
-      description: '现有课程资料涵盖 806 自控＋运控全程班，以及自控强化、冲刺与资料答疑。按基础、强化、冲刺、考前四个阶段组织复习。'
+      label: '电气考研', tag: '806 · ELECTRICAL',
+      title: '电气方向\n经典自控＋直流调速。',
+      description: '2027 招生目录中，806 为自动控制原理 B＋直流调速，其中自控占 60%、直流调速占 40%。复习围绕经典控制基础与直流调速展开。'
     },
     control: {
-      label: '控制考研', tag: 'CONTROL / 806 · 830',
-      title: '控制方向\n从原理到题目，逐步贯通。',
-      description: '现有材料包括 806 / 830 自控冲刺班、资料答疑班，以及 830 自控 A＋直流拖动冲刺卷。报名时请核对课程与报考科目的对应关系。'
+      label: '控制考研', tag: '830 · CONTROL',
+      title: '控制方向\n自控＋现控＋直流部分。',
+      description: '2027 招生目录中，830 包含自动控制原理 50%、现代控制理论 30%、直流拖动控制系统 20%。在经典自控基础上，单独安排状态空间、能控能观与反馈设计。'
     }
   },
   courses: [
@@ -30,7 +31,7 @@ window.BUFF_CONTENT = {
       source: '2027 全程班海报与课程展示 PDF', poster: 'full-course-table', document: 'assets/documents/buff-ysu-courses-and-qa.pdf'
     },
     {
-      id: 'intensive-course', subject: 'all', stage: 'initial', number: '02',
+      id: 'intensive-course', subject: 'control', stage: 'initial', number: '02',
       stageLabel: '初试 · 强化＋冲刺', title: '自控＋运控＋现控强化冲刺班',
       subtitle: '按专题突破，再衔接真题与模拟卷训练。',
       audience: '适合已有基础，准备开展专题强化、真题训练与考前整理的同学。',
@@ -73,7 +74,7 @@ window.BUFF_CONTENT = {
       source: '2027 答疑班海报及资料清单', poster: 'qa-overview', document: 'assets/documents/buff-ysu-courses-and-qa.pdf'
     },
     {
-      id: 'sprint-papers', subject: 'all', stage: 'initial', number: '05',
+      id: 'sprint-papers', subject: 'control', stage: 'initial', number: '05',
       stageLabel: '初试 · 冲刺卷资料', title: '830 冲刺押题八套卷',
       subtitle: '自控 A＋直流拖动，按海报列示覆盖十类专题。',
       audience: '适合需要模拟练习的同学；请先核对 830、自控 A 与直流拖动是否匹配自己的考试科目。',
@@ -93,6 +94,20 @@ window.BUFF_CONTENT = {
       topics: ['本次资料未提供完整复试课程，暂不将初试课程安排套用到复试。', '复试课程、服务、课时与价格将在机构提供具体信息后更新。'],
       source: '复试课程资料待补充'
     }
+  ],
+  admissions: {
+    year: 2027, source: 'https://zsjyc.ysu.edu.cn/info/1255/4497.htm',
+    programs: [
+      { code: '080800', name: '电气工程', degree: '学硕', label: '电气学硕', exam: '806', ordinary: 51, joint: 0 },
+      { code: '085801', name: '电气工程', degree: '专硕', label: '电气专硕', exam: '806', ordinary: 77, joint: 7 },
+      { code: '081100', name: '控制科学与工程', degree: '学硕', label: '控制学硕', exam: '830', ordinary: 110, joint: 0 },
+      { code: '085406', name: '控制工程', degree: '专硕', label: '控制专硕', exam: '830', ordinary: 121, joint: 0 }
+    ]
+  },
+  textbooks: [
+    { title: '自动控制原理', edition: '第四版', author: '夏德钤', publisher: '机械工业出版社', image: 'assets/books/automatic-control-4th.png', tag: '806 / 830 共同参考', scope: '电气与控制方向共同使用，专业课侧重点按各自科目要求区分。' },
+    { title: '电力拖动自动控制系统—运动控制系统', edition: '第五版', author: '阮毅、杨影、陈伯时', publisher: '机械工业出版社', image: 'assets/books/electric-drive-5th.png', tag: '直流部分', scope: '806：第 1–4 章；830：第 1–5 章。' },
+    { title: '现代控制理论', edition: '第三版', author: '刘豹', publisher: '机械工业出版社', image: '', tag: '830 控制方向增加', scope: '控制方向额外参考书。先展示目录信息，封面后续补充。' }
   ],
   posters: [
     { id: 'full-course-overview', group: 'full', title: '806 全程班 · 课程总览', description: '四阶段课程、配套资料、服务与班型价格。', image: 'assets/posters/full-course-overview.webp', thumb: 'assets/posters/full-course-overview-thumb.webp', width: 1024, height: 1536 },
