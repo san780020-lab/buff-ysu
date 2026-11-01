@@ -1,0 +1,231 @@
+@media (max-width:1100px) {
+  .main-nav { gap:21px; }
+  .header-inner { gap:25px; }
+  .showcase-copy h2 { font-size:34px; }
+  .showcase-copy>span { font-size:14px; }
+  .reexam-layout,.about-grid { gap:55px; }
+  h2 { font-size:39px; }
+  .contact-number { font-size:25px; }
+}
+@media (max-width:900px) {
+  .container { width:calc(100% - 48px); }
+  .header-inner { width:calc(100% - 40px); }
+  .menu-toggle { width:40px; height:44px; background:none; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; }
+  .menu-toggle span { width:17px; height:1px; background:#c5c5d1; transition:transform .25s; }
+  .menu-toggle[aria-expanded="true"] span:first-child { transform:translateY(3.5px) rotate(45deg); }
+  .menu-toggle[aria-expanded="true"] span:last-child { transform:translateY(-3.5px) rotate(-45deg); }
+  .main-nav { display:none; position:fixed; height:calc(100dvh - 48px); top:48px; left:0; right:0; background:#17171c; overflow:auto; padding:30px 36px; align-items:stretch; gap:0; }
+  .main-nav.is-open { display:flex; flex-direction:column; }
+  .nav-group { height:auto; display:grid; grid-template-columns:1fr 40px; align-items:start; }
+  .nav-link { font-size:26px; font-weight:600; line-height:1.5; padding:10px 0; color:#eeeeef; }
+  .nav-contact { font-size:20px; font-weight:500; line-height:1.5; margin-top:15px; padding:14px 0; color:#87b5ff; }
+  .nav-subtoggle { display:block; background:none; font-size:22px; color:#848491; margin-top:9px; width:40px; height:40px; }
+  .mega-menu { position:static; grid-column:1 / -1; display:none; transform:none; visibility:visible; opacity:1; border:0; pointer-events:auto; }
+  .nav-group.is-open .mega-menu { display:block; }
+  .mega-inner { width:100%; padding:12px 0 20px 12px; grid-template-columns:1fr; gap:16px; }
+  .mega-primary>p,.mega-secondary>p { font-size:10px; margin-bottom:12px; }
+  .mega-primary>a,.mega-primary>button { font-size:18px; margin-bottom:12px; }
+  .mega-secondary>a,.mega-secondary>button { font-size:13px; margin-bottom:9px; }
+  .mega-note { display:none; }
+  .nav-scrim { display:none; }
+  .hero { padding-top:40px; }
+  .hero h1 { font-size:68px; }
+  .hero-description { font-size:17px; }
+  .showcase-card { min-height:490px; padding:38px 23px 0; }
+  .showcase-copy h2 { font-size:30px; }
+  .showcase-copy>span { font-size:13px; }
+  .brand-plaque { width:235px; height:170px; }
+  .showcase-player { width:280px; height:170px; }
+  .paper-stack { width:230px; }
+  .section { padding:75px 0; }
+  h2 { font-size:35px; }
+  .section-lead { font-size:14px; }
+  .subject-panel { gap:35px; }
+  .subject-intro { padding:30px; }
+  .subject-intro h3 { font-size:25px; }
+  .subject-intro>p { font-size:13px; }
+  .roadmap { gap:24px 19px; }
+  .roadmap-item h4 { font-size:17px; }
+  .roadmap-item p { font-size:11px; }
+  .reexam-layout { gap:40px; }
+  .reexam-heading>p:not(.eyebrow) { font-size:13px; }
+  .reexam-list article { gap:17px; }
+  .reexam-list h3 { font-size:19px; }
+  .reexam-list p { font-size:12px; }
+  .course-card { padding:27px 26px 0; }
+  .course-card h3 { font-size:23px; }
+  .course-description { font-size:13px; }
+  .document-card { padding:25px 25px 0; }
+  .document-card h3 { font-size:21px; }
+  .poster-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .daily-question-body,.daily-answer-panel { padding:32px; }
+  .daily-question-body h3,.daily-answer-panel h3 { font-size:25px; }
+  .about-grid { gap:35px; }
+  .about-brands { gap:13px; }
+  .about-description { font-size:13px; }
+  .contact-person { padding:26px; }
+  .contact-number { font-size:23px; }
+  .copy-button { padding:8px 12px; }
+}
+@media (max-width:640px) {
+  .container { width:calc(100% - 40px); }
+  .brand img { width:25px; height:25px; }
+  .brand strong { font-size:14px; }
+  .announcement { padding:12px 24px; font-size:10px; line-height:1.8; }
+  .announcement a { margin-left:6px; }
+  .hero { padding-top:34px; padding-bottom:18px; }
+  .hero-eyebrow { font-size:12px; }
+  .hero h1 { font-size:57px; letter-spacing:-2.4px; margin-top:19px; }
+  .hero-description { font-size:14px; line-height:1.9; max-width:280px; margin:18px auto 0; }
+  .hero-actions { gap:12px; margin-top:22px; }
+  .button { font-size:12px; padding:10px 19px; min-height:40px; }
+  .hero-art { height:245px; gap:12px; width:360px; max-width:100%; margin-top:15px; }
+  .study-book { width:97px; height:164px; margin-bottom:13px; padding-left:6px; }
+  .book-center { width:109px; height:184px; }
+  .book-cover { padding:13px 9px; }
+  .book-cover img { width:19px; height:19px; border-radius:4px; padding:1px; }
+  .book-cover small { font-size:5px; letter-spacing:.2px; margin-top:5px; }
+  .book-series { margin-top:16px; font-size:7px; }
+  .book-cover strong,.book-center .book-cover strong { font-size:18px; margin-top:6px; letter-spacing:-1px; }
+  .book-right .book-cover strong { font-size:16px; }
+  .book-cover strong>span { font-size:23px; }
+  .book-line { font-size:6px; margin-top:6px; }
+  .book-footer { font-size:5px; letter-spacing:.3px; }
+  .book-floor { width:330px; bottom:0; }
+  .hero-art-caption { font-size:8px; }
+  .showcase-grid { grid-template-columns:1fr; gap:10px; padding:10px; }
+  .showcase-card { min-height:490px; padding:38px 25px 0; }
+  .showcase-copy>p { font-size:12px; }
+  .showcase-copy h2 { font-size:34px; letter-spacing:-1.3px; }
+  .showcase-copy>span { font-size:13px; line-height:1.9; }
+  .showcase-copy a { font-size:13px; margin-top:15px; }
+  .brand-plaque { width:260px; height:185px; margin-top:35px; }
+  .paper-stack { width:250px; height:225px; }
+  .showcase-player { width:300px; height:175px; }
+  .section { padding:60px 0; }
+  .section-top { flex-direction:column; align-items:flex-start; gap:19px; margin-bottom:30px; }
+  .eyebrow { font-size:10px; }
+  .section-eyebrow { margin-bottom:14px; }
+  h2 { font-size:32px; line-height:1.2; }
+  .section-lead { font-size:13px; line-height:1.9; }
+  .section-lead br { display:none; }
+  .section-note { font-size:10px; margin-top:21px; }
+  .text-link { font-size:13px; }
+  .subject-tabs { margin-bottom:25px; }
+  .subject-tabs button { font-size:12px; padding:9px 22px; min-height:36px; }
+  .subject-panel { grid-template-columns:1fr; gap:32px; }
+  .subject-intro { border-radius:20px; min-height:0; padding:30px; }
+  .subject-intro h3 { font-size:26px; margin:16px 0; }
+  .subject-intro>p { font-size:12px; }
+  .outline-label { font-size:9px; }
+  .subject-intro .text-link { margin-top:20px; }
+  .roadmap { gap:28px 24px; }
+  .roadmap-item>span { font-size:11px; margin-bottom:10px; }
+  .roadmap-item h4 { font-size:17px; }
+  .roadmap-item p { font-size:11px; }
+  .reexam-layout { grid-template-columns:1fr; gap:35px; }
+  .reexam-heading h2 br { display:none; }
+  .reexam-heading>p:not(.eyebrow) { font-size:12px; margin-top:18px; }
+  .reexam-heading .text-link { margin-top:20px; }
+  .reexam-list article { padding:21px 0; gap:18px; }
+  .reexam-list h3 { font-size:19px; }
+  .reexam-list p { font-size:12px; }
+  .reexam-number { font-size:12px; }
+  .class-service-note { padding:14px 16px; font-size:11px; gap:6px; border-radius:11px; line-height:1.9; }
+  .class-service-note strong { font-size:11px; }
+  .filter-row { gap:8px; margin-bottom:24px; }
+  .filter-button { padding:7px 15px; font-size:11px; min-height:33px; }
+  .filter-direction { width:100%; margin-top:7px; font-size:10px; }
+  .course-grid { grid-template-columns:1fr; gap:18px; }
+  .course-card { padding:28px 27px 0; border-radius:21px; }
+  .course-card h3 { font-size:25px; }
+  .course-top { margin-bottom:18px; }
+  .course-stage { font-size:10px; }
+  .course-number { font-size:15px; }
+  .course-description { font-size:12px; margin-top:13px; }
+  .course-price { font-size:23px; margin-top:21px; }
+  .course-topics { font-size:11px; margin-top:19px; }
+  .course-bottom { padding:19px 0; }
+  .course-bottom .text-link { font-size:12px; }
+  .planning-label { font-size:10px; }
+  .document-grid { grid-template-columns:1fr; gap:18px; }
+  .document-card { padding:27px 27px 0; border-radius:20px; }
+  .document-label { font-size:10px; margin-bottom:17px; }
+  .document-card h3 { font-size:23px; }
+  .document-card p { font-size:12px; }
+  .document-source { font-size:9px; }
+  .document-actions .text-link { font-size:12px; }
+  .poster-section-top { margin-top:42px; }
+  .poster-section-top h3 { font-size:24px; }
+  .poster-section-top>span { font-size:10px; }
+  .poster-filters { gap:7px; }
+  .poster-filters .filter-button { font-size:10px; padding:7px 12px; }
+  .poster-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:25px 13px; }
+  .poster-preview { border-radius:11px; padding:9px 9px 30px; }
+  .poster-expand { font-size:9px; bottom:8px; right:10px; }
+  .poster-card h4 { font-size:12px; margin-top:12px; }
+  .poster-card>p { font-size:10px; }
+  .daily-content { grid-template-columns:1fr; border-radius:22px; }
+  .daily-question-body { padding:31px 28px; min-height:250px; }
+  .daily-tag { font-size:10px; margin-bottom:20px; }
+  .daily-question-body h3,.daily-answer-panel h3 { font-size:25px; }
+  .daily-question-body>p { font-size:12px; }
+  .daily-answer-panel { padding:31px 28px; }
+  .daily-answer-panel p { font-size:12px; }
+  .video-grid { grid-template-columns:1fr; gap:30px; }
+  .video-thumbnail { aspect-ratio:16 / 9; border-radius:16px; }
+  .video-card h3 { font-size:21px; }
+  .video-card>p { font-size:12px; }
+  .about-grid { grid-template-columns:1fr; gap:30px; }
+  .about-description { font-size:13px; margin-top:19px; }
+  .about-caption { font-size:11px; }
+  .about-brands>div { padding:19px 16px 15px; border-radius:16px; }
+  .about-brands img { aspect-ratio:1.2; }
+  .about-brands span { font-size:10px; margin-top:10px; }
+  .contact-section { padding:59px 0 32px; }
+  .contact-layout h2 { font-size:32px; }
+  .contact-layout h2+p { font-size:12px; line-height:1.9; margin-top:18px; }
+  .contact-content { grid-template-columns:1fr; gap:16px; margin-top:31px; }
+  .contact-person { padding:26px; border-radius:20px; }
+  .contact-person-name { font-size:21px; }
+  .contact-person-role { font-size:11px; }
+  .contact-number { font-size:26px; }
+  .contact-number-row { margin-top:21px; }
+  .contact-account { font-size:10px; }
+  .copy-button { font-size:10px; padding:9px 14px; }
+  .copy-status { font-size:10px; }
+  .footer-main { flex-wrap:wrap; gap:12px; padding:22px 0 17px; }
+  .footer-brand { font-size:17px; }
+  .footer-brand>span { font-size:12px; }
+  .footer-main p { font-size:9px; }
+  .footer-main>a:last-child { font-size:10px; }
+  .footer-bottom { flex-direction:column; gap:9px; font-size:9px; padding-bottom:26px; }
+  .course-dialog { border-radius:20px; width:calc(100vw - 24px); }
+  .dialog-inner { padding:40px 27px 30px; }
+  .dialog-inner h2 { font-size:26px; }
+  .dialog-inner>p:not(.eyebrow) { font-size:12px; }
+  .dialog-inner .detail-heading { font-size:14px; margin-top:25px; }
+  .dialog-inner ul { font-size:12px; }
+  .detail-price-row { gap:14px; }
+  .detail-price-row strong { font-size:12px; }
+  .detail-price-row p { font-size:10px; }
+  .detail-price-value { font-size:22px; }
+  .detail-text,.detail-offer { font-size:11px; }
+  .detail-links .text-link { font-size:12px; }
+  .dialog-notice { font-size:9px; }
+  .poster-dialog { width:calc(100vw - 18px); border-radius:15px; max-height:95vh; }
+  .poster-dialog-head { padding:13px 16px; gap:12px; }
+  .poster-dialog h2 { font-size:14px; }
+  .poster-position { font-size:9px; }
+  .poster-close { width:32px; height:32px; font-size:23px; flex-shrink:0; }
+  .poster-viewer { height:62vh; padding:9px; }
+  .poster-toolbar { padding:12px 15px; gap:12px; }
+  .poster-toolbar>div { gap:6px; }
+  .poster-toolbar button { font-size:9px; padding:8px 10px; }
+  .poster-toolbar>a { font-size:10px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  *,*:before,*:after { animation:none!important; transition:none!important; }
+  .will-reveal { opacity:1; transform:none; }
+}

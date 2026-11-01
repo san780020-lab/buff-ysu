@@ -1,0 +1,49 @@
+.control-section { background:radial-gradient(ellipse at 70% 0%,#172031,#10121b 65%); }
+.control-section h2>span { background:linear-gradient(100deg,#a5c9ff,#bca5f4); color:transparent; background-clip:text; -webkit-background-clip:text; }
+.control-board { background:linear-gradient(130deg,#1b2030,#161a27); border:1px solid #ffffff12; border-radius:26px; overflow:hidden; box-shadow:0 30px 90px #0003; }
+.control-board-top { display:flex; align-items:center; justify-content:space-between; gap:20px; font-size:11px; color:#6c7895; padding:24px 30px 0; }
+.control-board-top>span:first-child { color:#a7b8d6; display:flex; align-items:center; gap:10px; }
+.control-board-top i { display:inline-block; width:6px; height:6px; border-radius:50%; background:#74a3e6; box-shadow:0 0 15px #72a7ff; }
+.control-loop-scroll { overflow-x:auto; overscroll-behavior:contain; }
+.control-loop { display:block; width:100%; min-width:760px; padding:17px 14px 0; }
+.control-loop text { letter-spacing:0; }
+.control-adjust { display:flex; align-items:center; gap:25px; margin:15px 30px 25px; border-top:1px solid #ffffff0a; padding-top:23px; color:#6f7e9c; font-size:11px; }
+.control-adjust label { min-width:180px; color:#96a5c1; }
+.control-adjust strong { color:#b7c9ed; font-size:13px; font-weight:500; margin-left:17px; }
+.control-adjust input { accent-color:#91a9f3; width:100%; max-width:400px; height:4px; cursor:pointer; }
+.control-adjust>span { margin-left:auto; white-space:nowrap; color:#a28fc9; }
+.control-plots { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#ffffff08; border-top:1px solid #ffffff08; }
+.control-plot { background:#161b29; padding:25px 27px 16px; }
+.plot-heading { display:flex; justify-content:space-between; align-items:center; gap:20px; margin:0 7px 10px; }
+.plot-heading h3 { font-size:14px; font-weight:500; color:#acbbd8; letter-spacing:0; }
+.plot-heading>span { color:#4e5e7a; font-size:10px; }
+.control-plot svg { display:block; width:100%; height:auto; overflow:visible; }
+.control-plot svg text { fill:#8c9bb5; font-size:12px; font-family:inherit; }
+.control-plot svg .axis-name { font-size:11px; fill:#7a8cae; }
+.control-board-bottom { display:flex; justify-content:space-between; gap:20px; padding:20px 30px; font-size:10px; color:#64718c; border-top:1px solid #ffffff08; }
+.control-board-bottom>span:last-child { color:#8994b8; letter-spacing:.5px; }
+.control-board:hover .signal-flow { stroke-dasharray:9 20; animation:signal-flow 2s linear infinite; }
+@keyframes signal-flow { to { stroke-dashoffset:-58; } }
+@media (max-width:900px) {
+  .control-adjust { gap:18px; }
+  .control-adjust label { min-width:160px; }
+  .control-plot { padding:22px 20px 15px; }
+  .plot-heading h3 { font-size:12px; }
+}
+@media (max-width:640px) {
+  .control-board { border-radius:20px; }
+  .control-board-top { padding:20px 21px 0; align-items:flex-start; flex-direction:column; gap:8px; font-size:10px; }
+  .control-board-top>span:last-child { font-size:9px; }
+  .control-loop { padding-top:20px; }
+  .control-adjust { flex-wrap:wrap; margin:12px 22px 22px; padding-top:18px; gap:16px; }
+  .control-adjust label { min-width:0; font-size:10px; flex:1; }
+  .control-adjust strong { font-size:12px; margin-left:10px; }
+  .control-adjust input { width:100%; max-width:none; order:3; }
+  .control-adjust>span { font-size:10px; }
+  .control-plots { grid-template-columns:1fr; }
+  .control-plot { padding:24px 17px 12px; }
+  .plot-heading h3 { font-size:13px; }
+  .control-plot svg text { font-size:16px; }
+  .control-plot svg .axis-name { font-size:14px; }
+  .control-board-bottom { flex-direction:column; gap:7px; padding:18px 22px; font-size:9px; }
+}
