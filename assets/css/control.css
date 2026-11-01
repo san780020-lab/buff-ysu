@@ -4,13 +4,18 @@
 .control-board-top { display:flex; align-items:center; justify-content:space-between; gap:20px; font-size:11px; color:#6c7895; padding:24px 30px 0; }
 .control-board-top>span:first-child { color:#a7b8d6; display:flex; align-items:center; gap:10px; }
 .control-board-top i { display:inline-block; width:6px; height:6px; border-radius:50%; background:#74a3e6; box-shadow:0 0 15px #72a7ff; }
-.control-loop-scroll { overflow-x:auto; overscroll-behavior:contain; }
+.control-loop-scroll { overflow-x:auto; overscroll-behavior-x:contain; overscroll-behavior-y:auto; }
 .control-loop { display:block; width:100%; min-width:760px; padding:17px 14px 0; }
 .control-loop text { letter-spacing:0; }
 .control-adjust { display:flex; align-items:center; gap:25px; margin:15px 30px 25px; border-top:1px solid #ffffff0a; padding-top:23px; color:#6f7e9c; font-size:11px; }
 .control-adjust label { min-width:180px; color:#96a5c1; }
 .control-adjust strong { color:#b7c9ed; font-size:13px; font-weight:500; margin-left:17px; }
-.control-adjust input { accent-color:#91a9f3; width:100%; max-width:400px; height:4px; cursor:pointer; }
+.control-adjust input { appearance:none; -webkit-appearance:none; background:transparent; accent-color:#91a9f3; width:100%; max-width:400px; height:32px; margin:0; cursor:pointer; }
+.control-adjust input::-webkit-slider-runnable-track { height:5px; border-radius:9px; background:linear-gradient(to right,#91a9f3 var(--gain-progress,26%),#414a60 var(--gain-progress,26%)); }
+.control-adjust input::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; width:20px; height:20px; margin-top:-7.5px; border-radius:50%; background:#a6b8ff; border:2px solid #d4ddff; box-shadow:0 2px 10px #0005; }
+.control-adjust input::-moz-range-track { height:5px; border-radius:9px; background:#414a60; }
+.control-adjust input::-moz-range-progress { height:5px; background:#91a9f3; border-radius:9px; }
+.control-adjust input::-moz-range-thumb { width:17px; height:17px; border-radius:50%; background:#a6b8ff; border:2px solid #d4ddff; }
 .control-adjust>span { margin-left:auto; white-space:nowrap; color:#a28fc9; }
 .control-plots { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#ffffff08; border-top:1px solid #ffffff08; }
 .control-plot { background:#161b29; padding:25px 27px 16px; }

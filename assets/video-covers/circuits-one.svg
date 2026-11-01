@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="电路全程班 系列一试听">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#161d30"/><stop offset="1" stop-color="#080d17"/></linearGradient><radialGradient id="glow"><stop stop-color="#7bb2ff" stop-opacity=".22"/><stop offset="1" stop-color="#7bb2ff" stop-opacity="0"/></radialGradient><pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse"><path d="M38 0H0V38" fill="none" stroke="#fff" stroke-opacity=".035"/></pattern></defs>
+<rect width="960" height="540" fill="url(#bg)"/><rect width="960" height="540" fill="url(#grid)"/><ellipse cx="790" cy="260" rx="340" ry="340" fill="url(#glow)"/>
+<g fill="none" stroke="#7bb2ff" stroke-width="2" opacity=".38" color="#7bb2ff" font-family="Georgia,serif"><path d="M610 270h35l12-20 20 40 20-40 20 40 12-20h28m0-55v110m18-110v110m0-55h85v100H620v-85"/><circle cx="840" cy="270" r="5"/><path d="M790 190q40-75 80 0t80 0" opacity=".5"/></g>
+<g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif"><rect x="48" y="42" width="174" height="36" rx="18" fill="#7bb2ff" fill-opacity=".12"/><text x="67" y="66" fill="#7bb2ff" font-size="17" font-weight="600">2027 · BUFF 团队</text>
+<text x="50" y="158" fill="#7bb2ff" font-size="15" letter-spacing="3">CIRCUIT ANALYSIS / 01</text>
+<text x="46" y="245" fill="#f5f7ff" font-size="57" font-weight="650" letter-spacing="-1">电路全程班</text>
+<text x="46" y="322" fill="#f5f7ff" font-size="57" font-weight="650" letter-spacing="-1">系列一试听</text>
+<text x="50" y="382" fill="#abb9d2" font-size="23">炼炼哥 · 直播试听</text>
+<path d="M50 435H910" stroke="#fff" stroke-opacity=".12"/><text x="50" y="486" fill="#8796b3" font-size="18" letter-spacing="1">OPEN CLASS / 试听课</text><text x="910" y="486" text-anchor="end" fill="#7bb2ff" font-size="18">BUFF × 2027</text></g></svg>

@@ -24,6 +24,7 @@
   }
   function render() {
     const gain = Number(slider.value);
+    slider.style.setProperty('--gain-progress', `${(gain-Number(slider.min))/(Number(slider.max)-Number(slider.min))*100}%`);
     const omega = Math.sqrt(4*gain-1);
     const damping = 1/(2*Math.sqrt(gain));
     document.getElementById('gain-value').textContent = `K = ${gain.toFixed(2)}`;

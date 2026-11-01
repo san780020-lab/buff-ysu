@@ -26,7 +26,7 @@
     return link;
   }
   function safeAsset(value) {
-    return /^assets\/(?:posters|documents|images|books)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)$/i.test(value || '') ? value : '';
+    return /^assets\/(?:(?:posters|documents|images|books)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
   }
   function assetLink(text, path, className) {
     const link = externalLink(text, safeAsset(path), className);
@@ -57,20 +57,46 @@
   }
   function renderVideos() {
     const grid = $('#video-grid'); grid.replaceChildren();
-    content.videos.filter(video => !video.subject || video.subject === 'all' || video.subject === selectedSubject).forEach((video, index) => {
+    const groups = [
+      {id:'control',title:'自动控制原理',description:'先从自控试听，了解老师的讲解方式。'},
+      {id:'extended',title:'团队其他专业课试听',description:'电路、电分、数模电等团队试听资源；燕山大学 806 / 830 的专业课范围请查看初试模块。'},
+      {id:'public',title:'公共课试听',description:'2027 考研公共课试听资源。'}
+    ];
+    groups.forEach(group => {
+      const videos = content.videos.filter(video => (video.group || 'control') === group.id);
+      if (!videos.length) return;
+      const section = element('section', `video-group video-group-${group.id}`);
+      const heading = element('div','video-group-heading'); heading.append(element('h3','',group.title),element('p','',group.description));
+      const cards = element('div','video-card-grid');
+      videos.forEach((video, index) => {
       const card = element('article', 'video-card');
       const url = safeURL(video.url);
       const thumbnail = element('div', `video-thumbnail video-theme-${index % 3}`);
-      const preview = element('div', 'video-preview-lines'); preview.setAttribute('aria-hidden', 'true');
+      const cover = safeAsset(video.cover);
+      if (cover) { const image = element('img','video-cover'); image.src=cover; image.alt=`${video.title}课程封面`; image.width=960; image.height=540; image.loading='lazy'; thumbnail.append(image); }
+      else { const preview = element('div', 'video-preview-lines'); preview.setAttribute('aria-hidden', 'true'); thumbnail.append(preview); }
       const play = element('span', 'video-play', '▶'); play.setAttribute('aria-hidden', 'true');
-      thumbnail.append(preview, element('span', 'video-category', video.category), play, element('span', 'video-status', url ? '观看视频 ↗' : '视频待上线'));
+      thumbnail.append(play, element('span', 'video-status', url ? '前往 B 站观看 ↗' : '视频待上线'));
       if (url) { const link = externalLink('', url, 'video-thumbnail-link'); link.setAttribute('aria-label', `观看${video.title}（在新标签页打开）`); link.append(thumbnail); card.append(link); }
       else card.append(thumbnail);
       const meta = element('div', 'video-meta'); meta.append(element('span', `platform-label ${video.platform}`, video.platform === 'douyin' ? '抖音' : 'BILIBILI'), element('span', '', video.category));
-      card.append(meta, element('h3', '', video.title), element('p', '', video.description || ''));
-      grid.append(card);
+      const info=element('div','video-card-info'); const title=element('h4'); title.append(url ? externalLink(video.title,url) : document.createTextNode(video.title));
+      info.append(meta,title,element('p','',video.description || '')); card.append(info);
+      cards.append(card);
+      });
+      section.append(heading,cards); grid.append(section);
     });
     if (!grid.children.length) grid.append(element('p', 'empty-state', '该方向的公开视频待更新。'));
+  }
+  function fillProfileLinks(target) {
+    target.replaceChildren();
+    for (const [key,label] of [['bilibili','B 站主页'],['douyin','抖音主页']]) {
+      const url=safeURL(content.contact[key]); if (!url) continue;
+      const link=externalLink('',url,`profile-link profile-${key}`);
+      link.setAttribute('aria-label', `${label}（在新标签页打开）`);
+      link.append(element('span','profile-badge',key==='bilibili'?'B站':'抖音'),element('span','',label),element('span','profile-arrow','↗'));
+      target.append(link);
+    }
   }
   function selectSubject(subject) {
     if (!content.subjects[subject]) return;
@@ -440,11 +466,13 @@
       let links=0;
       for(const [key,name] of [['bilibili','前往 B 站看讲解 ↗'],['douyin','前往抖音看讲解 ↗']]) { const url=safeURL(question[key]); if(url) { answer.append(externalLink(name,url,'text-link')); links++; } }
       if(!links) answer.append(element('p','','本题视频讲解待更新。'));
+      const profiles=element('div','profile-links'); fillProfileLinks(profiles); answer.append(profiles);
       target.replaceChildren(body,answer);
     }
     show(questions[0]);
   }
   selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily(); renderTextbooks(); renderAdmissions();
+  $$('[data-profile-links]').forEach(fillProfileLinks);
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { threshold:.08 });
     $$('.showcase-card,.section-top').forEach(node => { node.classList.add('will-reveal'); observer.observe(node); });

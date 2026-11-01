@@ -183,3 +183,53 @@ html { scrollbar-gutter:stable; }
 .module-dialog[data-module="admissions"] .analysis-intro { margin-bottom:24px; font-size:13px; }
 .module-dialog[data-module="admissions"] .admissions-chart { padding:20px 25px; }
 .module-dialog[data-module="admissions"] .admission-bar-row { padding:11px 0; }
+.profile-links { display:flex; flex-wrap:wrap; gap:12px; }
+.profile-link { display:inline-flex; align-items:center; gap:10px; padding:11px 17px; border:1px solid #ffffff18; border-radius:14px; background:#ffffff05; color:#cbd5e8; font-size:13px; transition:background .2s,border-color .2s,transform .2s; }
+.profile-link:hover { background:#ffffff0d; border-color:#ffffff38; transform:translateY(-2px); }
+.profile-badge { display:grid; place-items:center; height:28px; min-width:36px; padding:0 5px; border-radius:7px; font-size:11px; font-weight:650; }
+.profile-bilibili .profile-badge { color:#ffa7c6; background:#fb72991c; }
+.profile-douyin .profile-badge { color:#83e4df; background:#3cd8d01a; }
+.profile-arrow { color:#8a95aa; margin-left:8px; }
+.hero-profiles { justify-content:center; margin-top:22px; }
+.hero-profiles .profile-link { font-size:11px; padding:6px 12px; border-radius:99px; background:#11182c80; }
+.hero-profiles .profile-badge { min-width:30px; height:23px; font-size:10px; }
+.nav-profiles { margin-top:10px; }
+.nav-profiles .profile-link { font-size:12px; }
+.video-profiles { margin-bottom:42px; }
+.module-dialog[data-module="videos"] .section { padding-top:34px; }
+.module-dialog[data-module="videos"] .section-top { margin-bottom:26px; }
+.module-dialog[data-module="videos"] .section-top h2 { font-size:32px; }
+.module-dialog[data-module="videos"] .video-profiles { margin-bottom:28px; }
+.video-grid { display:flex; flex-direction:column; gap:48px; }
+.video-group-heading { margin-bottom:22px; }
+.video-group-heading h3 { font-size:25px; font-weight:550; letter-spacing:-.5px; }
+.video-group-heading p { margin-top:12px; font-size:13px; color:#9ca9c0; line-height:1.8; max-width:750px; }
+.video-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:30px 22px; }
+.video-thumbnail { aspect-ratio:16 / 9; border-radius:16px; isolation:isolate; }
+.video-cover { width:100%; height:100%; object-fit:contain; transition:transform .35s; }
+.video-thumbnail-link:hover .video-cover { transform:scale(1.025); }
+.video-thumbnail .video-play { position:absolute; bottom:20px; right:20px; width:36px; height:36px; background:#080d17c9; backdrop-filter:blur(8px); }
+.video-thumbnail .video-status { opacity:0; color:#e1e8ff; bottom:25px; left:20px; right:auto; transition:opacity .2s; font-size:11px; }
+.video-thumbnail-link:hover .video-status,.video-thumbnail-link:focus-visible .video-status { opacity:1; }
+.video-meta { font-size:10px; color:#9da9bf; }
+.video-card-info h4 { font-size:19px; font-weight:550; line-height:1.5; letter-spacing:-.4px; }
+.video-card-info h4 a:hover { color:#9bbfff; }
+.video-card-info>p { color:#94a1b7; font-size:12px; line-height:1.8; margin-top:9px; }
+.video-group-control .video-card-grid { grid-template-columns:1fr; }
+.video-group-control .video-card { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); align-items:center; background:linear-gradient(110deg,#1c2b47,#171d2b); border:1px solid #ffffff12; border-radius:20px; overflow:hidden; }
+.video-group-control .video-thumbnail { border-radius:0; }
+.video-group-control .video-card-info { padding:32px; }
+.video-group-control .video-card-info h4 { font-size:26px; }
+.video-group-control .video-meta { margin-top:0; }
+.daily-answer-panel .profile-links { margin-top:24px; }
+@media(max-width:900px) { .video-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .video-group-control .video-card-info { padding:24px; } .video-group-control .video-card-info h4 { font-size:21px; } }
+@media(max-width:640px) {
+  .video-card-grid,.video-group-control .video-card { grid-template-columns:1fr; }
+  .video-group-control .video-card-info { padding:23px; }
+  .video-group-heading h3 { font-size:22px; }
+  .video-group-heading p { font-size:12px; }
+  .video-profiles .profile-link { flex:1; justify-content:center; padding:10px 12px; font-size:12px; }
+  .video-profiles .profile-arrow { margin-left:0; }
+  .profile-links { gap:10px; }
+  .video-thumbnail .video-status { opacity:1; background:#080d17b0; padding:3px 8px; border-radius:6px; bottom:22px; left:14px; font-size:10px; }
+}

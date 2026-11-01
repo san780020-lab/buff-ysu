@@ -27,7 +27,7 @@
 
 1. `subjects`：两个专业方向的简介。
 2. `courses`：课程名称、适合人群、阶段、课时、资料、服务和价格。`previewTopics` 用于首页卡片，`topics` 用于详情；`pricing` 为各班型价格。`stage` 可用 `initial`（初试）或 `reexam`（复试），`subject` 用 `electrical`、`control` 或 `all`。`poster` 对应海报 ID，`document` 为站内 PDF 路径。
-3. `videos`：填写真实视频标题和完整 `https://` 链接。`platform` 用 `bilibili` 或 `douyin`；留空 `url` 展示“视频待上线”。首版采用新标签页打开视频，日后可添加 B 站官方嵌入播放器。
+3. `videos`：填写真实视频标题、完整 `https://` 链接及 `cover` 封面路径；`group` 用 `control`（自控）、`extended`（团队其他专业课）、`public`（公共课）。`platform` 用 `bilibili` 或 `douyin`；留空 `url` 展示“视频待上线”。首版采用新标签页打开视频，日后可添加 B 站官方嵌入播放器。
 4. `contact`：`people` 列表维护咨询人、角色和 QQ；`qqGroup` 为交流群。还支持公众号、微信、邮箱、B 站和抖音主页。不要填写未公开的私人联系方式。
 5. `posters`：维护海报标题、分类、缩略图、原尺寸大图和宽高。图片存放在 `assets/posters/`。
 6. `dailyQuestions`：公开题目列表，包含 `id`、`date`、`subject`、`title`、`question`、`image`、`knowledgePoint`、`bilibili`、`douyin`。有多道题时可选择往期题目。答案不应通过隐藏按钮放在公开仓库中；目前只提供跳转到平台观看讲解的入口，没有关注验证。
@@ -90,3 +90,9 @@ GitHub 仓库的 Settings → Pages → Build and deployment：选择 **Deploy f
 `textbooks` 维护教材。自动控制原理第四版与运动控制系统第五版封面由机构提供，存于 `assets/books/`。806 的运动控制系统范围为第1至4章；830 为第1至5章，另列现代控制理论第三版（刘豹），其封面待补充。
 
 招生图表、教材、初试与复试、院校分析均通过同一个页面内大窗口呈现，保留首页滚动位置。PDF 在线查看也在窗口内嵌预览，下载功能独立保留。
+
+## 试听课与主页入口
+
+已收录机构提供的 10 个 2027 试听链接，按自控、团队其他专业课和公共课分组。原视频封面未能通过公开页面获取，本站在 `assets/video-covers/` 制作对应标题 SVG 封面，不代表原视频画面。B 站、抖音主页去除跟踪参数，统一维护在 `contact` 中，展示在首页、公开课下拉菜单、公开课窗口、每日一题及联系窗口。平台主页链接与单节视频链接分开维护。
+
+顶部将两专业合并为“电气控制考研”，下拉菜单内保留 806 与 830 两条独立路线。控制框图仅限制水平方向的滚动传递，垂直滚轮可继续滚动页面；增益滑块交互高度提高至 32px。

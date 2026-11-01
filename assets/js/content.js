@@ -128,13 +128,22 @@ window.BUFF_CONTENT = {
   // knowledgePoint, bilibili, douyin。视频字段留空时显示讲解待更新。
   dailyQuestions: [],
   videos: [
-    { title: '专业课公开课', category: '课程试听', platform: 'bilibili', url: '', subject: 'all', description: '从一节课，了解讲解思路。' },
-    { title: '题目讲解与复盘', category: '解题思路', platform: 'bilibili', url: '', subject: 'all', description: '理解一道题，也理解背后的知识。' },
-    { title: '备考经验与日常', category: '备考分享', platform: 'douyin', url: '', subject: 'all', description: '关于学习节奏与备考过程的分享。' }
+    { title: '自动控制原理全程班 · 系列三', category: '自控试听', group: 'control', platform: 'bilibili', url: 'https://b23.tv/STYQFiG', cover: 'assets/video-covers/automatic-control.svg', description: 'BUFF 控制考研 · 系列三老师试听课。' },
+    { title: '电路全程班 · 炼炼哥系列一', category: '电路 · 直播试听', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/oQ9b9qv', cover: 'assets/video-covers/circuits-one.svg', description: '2027 BUFF 团队电路全程班系列一试听。' },
+    { title: '电路全程班 · BUFF 学长系列二', category: '电路 · 直播试听', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/DnqlUwY', cover: 'assets/video-covers/circuits-two.svg', description: '2027 BUFF 团队电路全程班系列二试听。' },
+    { title: '电路全程班 · 京京哥系列三', category: '电路 · 直播试听', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/xCFTy0P', cover: 'assets/video-covers/circuits-three.svg', description: '2027 BUFF 团队电路全程班系列三试听。' },
+    { title: '开式网络的潮流计算', category: '电力系统分析', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/I2WLtQ3', cover: 'assets/video-covers/power-flow.svg', description: '藏锋学长 · 2027 电分试听课。' },
+    { title: '对称分量法', category: '电力系统分析', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/PPHRPM7', cover: 'assets/video-covers/symmetrical-components.svg', description: '藏锋学长 · 2027 电分试听课。' },
+    { title: '有功负荷最优分配', category: '电力系统分析', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/z0WV40I', cover: 'assets/video-covers/load-dispatch.svg', description: '藏锋学长 · 2027 电分试听课。' },
+    { title: '数字电路、模拟电路试听', category: '其他初试专业课', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/ptA3Izq', cover: 'assets/video-covers/electronics.svg', description: '2027 BUFF 团队初试专业课试听。' },
+    { title: '电力电子、电机学试听', category: '其他初试专业课', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/MsoaCYh', cover: 'assets/video-covers/power-electronics.svg', description: '2027 BUFF 团队初试专业课试听。' },
+    { title: '2027 考研公共课试听', category: '初试公共课', group: 'public', platform: 'bilibili', url: 'https://b23.tv/HxXmKIS', cover: 'assets/video-covers/public-courses.svg', description: 'BUFF 团队考研公共课试听课程。' }
   ],
   contact: {
     people: [{ name: '桑桑哥', role: '课程、资料与拼团咨询', qq: '3298202133' }],
     qqGroup: '716928002', groupLabel: '2027 燕山大学电气与控制考研交流群',
-    publicAccount: 'BUFF电气考研', wechat: '', email: '', bilibili: '', douyin: '', qrImage: ''
+    publicAccount: 'BUFF电气考研', wechat: '', email: '',
+    bilibili: 'https://space.bilibili.com/3747561124924582',
+    douyin: 'https://www.douyin.com/user/MS4wLjABAAAA8dRtIFbTDSuerYLkNZ2dafkrI7MZLHi26YU_ngKYYrXdwbf4a4d_Dgttqx5bb5RF', qrImage: ''
   }
 };
