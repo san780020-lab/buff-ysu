@@ -1,0 +1,43 @@
+// Run security and atomic-publication checks without a live token or writes.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync('assets/js/admin.js','utf8').split("  $('#connect').addEventListener")[0]+`
+  window.TEST={validation,publish,configure:values=>{token='test-only';head='base';documentData=values;},state:()=>({head,dirty,busy})};
+})();`;
+async function fixture(mode='success'){
+  const elements=new Map(),calls=[];
+  const context={window:{},document:{querySelector:key=>{if(!elements.has(key))elements.set(key,{textContent:'',classList:{toggle(){}},disabled:false});return elements.get(key);}},structuredClone,TextEncoder,TextDecoder,Uint8Array,AbortSignal,Map,Set,URL,console,crypto:require('node:crypto').webcrypto,btoa:s=>Buffer.from(s,'binary').toString('base64'),atob:s=>Buffer.from(s,'base64').toString('binary'),setTimeout:callback=>{callback();return 0;},fetch:async(url,options)=>{
+    calls.push({url,method:options.method,body:options.body&&JSON.parse(options.body)});
+    let value;
+    if(url.endsWith('/user'))value={login:mode==='unauthorized'?'someone-else':'san780020-lab'};
+    else if(url.includes('/git/ref/heads/'))value={object:{sha:mode==='conflict'?'changed':'base'}};
+    else if(url.endsWith('/git/commits/base'))value={tree:{sha:'tree-base'}};
+    else if(url.includes('/contents/index.html?ref='))value={content:Buffer.from('<script src="assets/js/managed-data.js?v=old"></script>').toString('base64')};
+    else if(url.endsWith('/git/blobs'))value={sha:'blob-new'};
+    else if(url.endsWith('/git/trees'))value={sha:'tree-new'};
+    else if(url.endsWith('/git/commits'))value={sha:'commit-new'};
+    else if(url.includes('/git/refs/heads/'))value={};
+    else if(url.endsWith('/pages/builds/latest'))value={commit:'commit-new',status:'built'};
+    else if(url.endsWith('/pages/builds'))value={};
+    else throw new Error('Unexpected request '+url);
+    return {ok:true,json:async()=>value};
+  }};
+  vm.createContext(context);await vm.runInContext(source,context);return {test:context.window.TEST,calls,elements};
+}
+(async()=>{
+  const {test,calls,elements}=await fixture();
+  const valid={version:1,overrides:{analysis:{studentOrigins:{year:2027,sampleType:'机构学员样本',levels:[{label:'公办本科',percentage:100}],crossMajor:[{label:'非跨考',percentage:100}]}}}};
+  test.validation(valid);
+  for(const mutation of [data=>data.overrides.analysis.studentOrigins.count=12,data=>data.overrides.analysis.studentOrigins.levels[0].school='Private school',data=>data.overrides.analysis.studentOrigins.levels[0].percentage=40]){
+    const bad=structuredClone(valid);mutation(bad);assert.throws(()=>test.validation(bad));
+  }
+  assert.throws(()=>test.validation({version:1,overrides:{notAllowed:{}}}));
+  assert.throws(()=>test.validation({version:1,overrides:{promotions:[{id:'x',title:'github_pat_test'}]}}));
+  test.configure(valid);await test.publish();
+  const tree=calls.find(call=>call.url.endsWith('/git/trees')).body;
+  assert.equal(tree.base_tree,'tree-base');assert.equal(tree.tree.length,3);assert.equal(tree.tree[0].path,'assets/data/managed-content.json');
+  const ref=calls.find(call=>call.method==='PATCH').body;assert.equal(ref.force,false);assert.equal(ref.sha,'commit-new');
+  assert.match(elements.get('#status').textContent,/发布成功/);
+  assert.ok(calls.every(call=>call.url.startsWith('https://api.github.com/')));
+  for(const mode of ['unauthorized','conflict']){const other=await fixture(mode);other.test.configure(valid);await other.test.publish();assert.equal(other.calls.filter(call=>call.method!=='GET').length,0);assert.match(other.elements.get('#status').textContent,mode==='unauthorized'?/所有者/:/已有其他更新/);}
+  console.log('PASS: owner rejection, concurrent-update rejection, atomic non-forced publish, percentage-only privacy, token leakage guard.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

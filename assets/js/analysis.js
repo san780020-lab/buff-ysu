@@ -1,5 +1,6 @@
-(() => {
+(async () => {
   'use strict';
+  await window.BUFF_MANAGED_READY;
   const $=s=>document.querySelector(s), ns='http://www.w3.org/2000/svg';
   const colors=['#77a9fa','#b298ec','#62c1be','#8d9bb0'];
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
@@ -66,6 +67,6 @@
     select.addEventListener('change',composition);composition();
   }
   fetch('assets/data/analysis.json?v=20261101-analysis',{cache:'no-cache'}).then(response=>{if(!response.ok)throw new Error('Analysis data unavailable');return response.json();})
-    .then(data=>{renderStudents(data.studentOrigins);renderHistory(data.admissionHistory);})
+    .then(data=>{Object.assign(data,window.BUFF_MANAGED?.overrides?.analysis || {});renderStudents(data.studentOrigins);renderHistory(data.admissionHistory);})
     .catch(()=>{$('#student-charts').replaceChildren(el('p','empty-state','汇总图表暂未加载，请刷新重试。'));$('#admission-trend-chart').replaceChildren(el('p','empty-state','录取图表暂未加载，请刷新重试。'));});
 })();

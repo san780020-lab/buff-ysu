@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const extra={
+    '文字阅读':'Text view','原图预览':'Original pages','内容管理':'Manage content',
     '200题':'200 Qs',
     '清晰页待加载':'Preview ready; full page pending',
     '高清阅读':'HD view','正在加载清晰页面…':'Loading readable preview…','正在加载高清页面…':'Loading high-resolution page…','高清暂未加载，点击重试':'High resolution unavailable. Retry','高清预览已加载':'High-resolution preview loaded','高清暂未加载，可重试或打开原图。':'High resolution unavailable. Retry or open the original.',

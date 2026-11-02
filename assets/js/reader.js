@@ -64,6 +64,18 @@
       state.retry.hidden=true;
       state.figure.setAttribute('aria-busy','true');
       if(!state.shown||quality===2&&index===current){state.status.textContent=quality===2?'正在加载高清页面…':'正在加载清晰页面…';state.status.hidden=false;}
+      // Let the browser load the displayed preview itself. Scrolling must not
+      // repeatedly cancel a visible image while a separate decoder is working.
+      if(quality===1){
+        clearTimeout(state.timer);
+        state.image.loading=index===current?'eager':'lazy';
+        state.image.fetchPriority=index===current?'high':'low';
+        state.image.onload=()=>{if(token!==generation)return;clearTimeout(state.timer);state.shown=Math.max(state.shown,1);state.figure.setAttribute('aria-busy','false');state.status.hidden=true;state.retry.hidden=true;};
+        state.image.onerror=()=>{if(token!==generation)return;clearTimeout(state.timer);state.requested.delete(1);state.figure.setAttribute('aria-busy','false');state.status.hidden=true;state.retry.hidden=false;};
+        state.timer=setTimeout(()=>{if(!state.shown&&token===generation){state.status.hidden=true;state.retry.hidden=false;}},20000);
+        state.image.src=source;
+        return;
+      }
       load(source,priority,token).then(src=>{
         if(!src){state.requested.delete(quality);state.status.textContent='清晰页待加载';state.figure.setAttribute('aria-busy','false');return;}
         if(token!==generation||quality<state.shown)return;
@@ -111,8 +123,27 @@
     const observer='IntersectionObserver' in window?new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const index=figures.indexOf(entry.target);ensure(index,1,1);}},{rootMargin:'200px 0px',threshold:0}):null;
     figures.forEach(figure=>observer?.observe(figure));
     const scroll=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update);}};window.addEventListener('scroll',scroll,{passive:true});
-    cleanup=()=>{observer?.disconnect();window.removeEventListener('scroll',scroll);};
+    cleanup=()=>{observer?.disconnect();window.removeEventListener('scroll',scroll);states.forEach(state=>{clearTimeout(state.timer);state.image.onload=state.image.onerror=null;});};
     ensure(0,1,-1);if(canPrefetch())ensure(1,1,3);
   }
-  window.BUFF_READER={has:url=>!!manifest[url],mount,reset,prefetch};
+  function mountEdition(viewer,info,download){
+    viewer.classList.add('experience-reader');
+    let edition=window.BUFF_READING?.[info.url];
+    if(!edition&&info.url.includes('buff-ysu-')){
+      const sprint=info.url.includes('sprint-introduction');
+      const courses=(window.BUFF_CONTENT?.courses || []).filter(course=>(sprint?['sprint-course','sprint-papers']:['full-course','intensive-course','qa-course']).includes(course.id));
+      edition={intro:'课程说明网页整理版。文字直接显示，课程原图和 PDF 下载保留。班型以当前展示与咨询确认为准。',sections:courses.map(course=>({title:course.title,paragraphs:[course.audience,...course.topics,...(course.pricing || []).map(row=>`${row.label}：¥${row.price}。${row.note}。`),...(course.services || []),course.offer].filter(Boolean)}))};
+    }
+    if(!edition)return mount(viewer,info,download);
+    const actions=el('div','reader-toolbar reader-edition-actions'),textButton=el('button','','文字阅读'),imageButton=el('button','','原图预览');
+    [textButton,imageButton].forEach(button=>button.type='button');textButton.setAttribute('aria-pressed','true');imageButton.setAttribute('aria-pressed','false');actions.append(textButton,imageButton,download);
+    const article=el('article','reading-article'),original=el('div','reading-original');article.dataset.noTranslate='';
+    article.append(el('p','reading-edition-note','网页整理版 · 非逐字转录，完整内容可查看原图或下载 PDF'),el('p','reading-intro',edition.intro));
+    const toc=el('nav','reading-toc');toc.setAttribute('aria-label','阅读目录');
+    edition.sections.forEach((section,index)=>{const block=el('section','reading-section');block.id='reading-part-'+index;const link=el('a','',section.title);link.href='#'+block.id;link.addEventListener('click',event=>{event.preventDefault();block.scrollIntoView({block:'start',behavior:'smooth'});});toc.append(link);block.append(el('h2','',section.title));section.paragraphs.forEach(text=>block.append(el('p','',text)));article.append(block);});
+    article.insertBefore(toc,article.children[2] || null);original.hidden=true;viewer.append(actions,article,original);let mounted=false;
+    const show=images=>{article.hidden=images;original.hidden=!images;textButton.setAttribute('aria-pressed',String(!images));imageButton.setAttribute('aria-pressed',String(images));if(images&&!mounted){mounted=true;const copy=download.cloneNode(true);mount(original,info,copy);}viewer.scrollIntoView({block:'start'});};
+    textButton.addEventListener('click',()=>show(false));imageButton.addEventListener('click',()=>show(true));
+  }
+  window.BUFF_READER={has:url=>!!manifest[url]||!!window.BUFF_READING?.[url],mount:mountEdition,reset,prefetch:()=>{}};
 })();

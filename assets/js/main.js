@@ -1,8 +1,10 @@
-(() => {
+(async () => {
   'use strict';
+  await window.BUFF_MANAGED_READY;
   const content = window.BUFF_CONTENT;
   if (!content) return;
   for(const poster of content.posters || [])Object.assign(poster,window.BUFF_MEDIA?.posters?.[poster.id] || {});
+  for(const poster of content.posters || []){poster.thumb||=poster.image;poster.preview||=poster.image;poster.screen||=poster.image;}
   let selectedSubject = 'electrical';
   let selectedFilter = 'all';
   let selectedPosterFilter = 'all';
@@ -27,7 +29,7 @@
     return link;
   }
   function safeAsset(value) {
-    return /^assets\/(?:(?:posters|documents|images|books|experiences|promotions|readers)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
+    return /^assets\/(?:(?:posters|documents|images|books|experiences|promotions|readers|uploads)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
   }
   function safePromotionImage(value) {
     if(safeAsset(value))return value;
@@ -86,7 +88,7 @@
       if (cover) { const image = element('img','video-cover'); image.src=cover; image.alt=`${video.title}课程封面`; image.width=960; image.height=540; image.loading='lazy'; thumbnail.append(image); }
       else { const preview = element('div', 'video-preview-lines'); preview.setAttribute('aria-hidden', 'true'); thumbnail.append(preview); }
       const play = element('span', 'video-play', '▶'); play.setAttribute('aria-hidden', 'true');
-      thumbnail.append(play, element('span', 'video-status', url ? '前往 B 站观看 ↗' : '视频待上线'));
+      thumbnail.append(play, element('span', 'video-status', url ? (video.platform==='douyin'?'前往抖音观看 ↗':'前往 B 站观看 ↗') : '视频待上线'));
       if (url) { const link = externalLink('', url, 'video-thumbnail-link'); link.setAttribute('aria-label', `观看${video.title}（在新标签页打开）`); link.append(thumbnail); card.append(link); }
       else card.append(thumbnail);
       const meta = element('div', 'video-meta'); meta.append(element('span', `platform-label ${video.platform}`, video.platform === 'douyin' ? '抖音' : 'BILIBILI'), element('span', '', video.category));
@@ -177,7 +179,7 @@
       if (!safeAsset(document.url)) return;
       const card = element('article', 'document-card');
       const body = element('div', 'document-card-body');
-      body.append(element('span', 'document-label', `PDF · 公开摘页 · ${document.pages} 页`), element('h3', '', document.title), element('p', '', document.description), element('small', 'document-source', `${document.sourcePages} · ${document.size}`));
+      body.append(element('span', 'document-label', document.pages?`PDF · ${document.pages} 页`:'PDF · 资料'), element('h3', '', document.title), element('p', '', document.description), element('small', 'document-source', [document.sourcePages,document.size].filter(Boolean).join(' · ')));
       const actions = element('div', 'document-actions');
       const download = assetLink('下载 PDF ↓', document.url, 'text-link'); download.setAttribute('download', document.url.split('/').pop());
       actions.append(assetLink('在线查看 ↗', document.url, 'text-link'), download);
@@ -533,8 +535,11 @@
       if(window.BUFF_READER?.has(currentPDFPath)) {
         window.BUFF_READER.mount(viewer,info,download);
       } else {
-        const frame=element('iframe'); frame.src=currentPDFPath; frame.title=info?.title || '课程 PDF 说明';
-        const actions=element('div','module-pdf-actions');actions.append(element('span','','若浏览器不支持内嵌预览，可下载查看。'),download);viewer.append(frame,actions);
+        viewer.classList.add('experience-reader');
+        const article=element('article','reading-article');article.append(element('p','',info?.description || '资料说明'));
+        (info?.body || []).forEach(text=>article.append(element('p','',text)));
+        (info?.images || []).forEach(path=>{if(safeAsset(path)){const image=element('img');image.src=path;image.alt=info.title;image.loading='lazy';article.append(image);}});
+        article.append(download);viewer.append(article);
       }
       moduleContent.append(viewer);
     }
@@ -641,14 +646,14 @@
     show(questions[0]);
   }
   selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily(); renderTextbooks(); renderAdmissions(); renderUpdates(); renderExperiences();
-  fetch('assets/data/daily-promotion.txt',{cache:'no-cache'}).then(response=>{if(!response.ok)throw new Error('Promotion unavailable');return response.text();}).then(text=>{
+  if(!Object.hasOwn(window.BUFF_MANAGED?.overrides || {},'promotions'))fetch('assets/data/daily-promotion.txt',{cache:'no-cache'}).then(response=>{if(!response.ok)throw new Error('Promotion unavailable');return response.text();}).then(text=>{
     const lines=text.trim().split(/\r?\n/),title=lines.shift()?.trim();if(!title)return;
     const body=lines.join('\n').trim().split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);
     content.promotions.forEach(item=>item.featured=false);
     content.promotions.unshift({id:'daily-pasted',category:'机构宣传',title,summary:body[0] || '',body:body.slice(1),module:'contact',actionLabel:'联系咨询',featured:true,images:window.BUFF_PROMOTION_IMAGES || []});
     renderUpdates();if(currentModule==='update-detail'&&currentUpdateID==='daily-pasted'){moduleContent.replaceChildren();renderUpdateDetail(currentUpdateID);}
   }).catch(()=>{});
-  fetch('assets/data/daily-promotion-images.json',{cache:'no-cache'}).then(response=>response.ok?response.json():[]).then(images=>{
+  if(!Object.hasOwn(window.BUFF_MANAGED?.overrides || {},'promotions'))fetch('assets/data/daily-promotion-images.json',{cache:'no-cache'}).then(response=>response.ok?response.json():[]).then(images=>{
     if(!Array.isArray(images))return;images=images.filter(image=>safePromotionImage(typeof image==='string'?image:image?.src));const latest=content.promotions.find(item=>item.id==='daily-pasted');if(latest)latest.images=images;
     window.BUFF_PROMOTION_IMAGES=images;
     renderUpdates();
