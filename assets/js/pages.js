@@ -32,7 +32,7 @@
     const row=document.createElement('div');row.className='page-chapter-row container';
     keys.forEach(id=>{const item=items[id];if(!item)return;const button=document.createElement('button');button.type='button';button.className='page-chapter';button.dataset.moduleOpen=id;button.setAttribute('aria-current',id===key?'page':'false');
       const svg=document.createElementNS(svgNS,'svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const path=document.createElementNS(svgNS,'path');path.setAttribute('d',item[2]);svg.append(path);
-      const title=document.createElement('strong');title.textContent=item[0];const caption=document.createElement('span');caption.textContent=item[1];button.append(svg,title,caption);row.append(button);
+      const title=document.createElement('strong');title.textContent=item[0];const caption=document.createElement('span');caption.textContent=id==='admissions'?`${window.BUFF_CONTENT.admissions.year} 官方目录`:item[1];button.append(svg,title,caption);row.append(button);
     });nav.append(row);
   };
 })();

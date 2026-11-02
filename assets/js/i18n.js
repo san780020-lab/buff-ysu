@@ -61,6 +61,7 @@
   function translate(text){
     if(!/[\u3400-\u9fff]/.test(text))return text;
     const trimmed=text.trim();if(dictionary[trimmed])return text.replace(trimmed,dictionary[trimmed]);
+    const year=trimmed.match(/\b20\d{2}\b/);if(year&&year[0]!=='2027'){const template=trimmed.replace(/\b20\d{2}\b/g,'2027');if(dictionary[template])return text.replace(trimmed,dictionary[template].replace(/\b2027\b/g,year[0]));}
     let result=text;for(const phrase of phrases)if(result.includes(phrase))result=result.split(phrase).join(dictionary[phrase]);
     return result.replace(/(\d+) 年/g,'$1').replace(/(\d+) 届/g,'$1 cohort').replace(/(\d+) 人/g,'$1 students').replace(/(\d+) 页/g,'$1 pages');
   }

@@ -12,6 +12,23 @@
         if(!/^[a-z0-9-]{1,80}$/.test(key)||typeof value!=='string')continue;
         const node=document.querySelector(`[data-edit-key="${key}"]`);if(node)node.textContent=value;
       }
+      const site={examYear:2027,pastPaperRange:'2004–最新',copyrightYear:'自动',...values.site};
+      if(Number.isInteger(site.examYear)&&site.examYear>=2027&&site.examYear<=2100){
+        window.BUFF_EXAM_YEAR=site.examYear;
+        for(const node of document.querySelectorAll('[data-cohort-year]'))node.textContent=node.textContent.replace(/20\d{2}/,String(site.examYear));
+      }
+      const range=document.querySelector('[data-edit-key="hero-text-7"]');if(range&&typeof site.pastPaperRange==='string'&&site.pastPaperRange.length<=30)range.textContent=site.pastPaperRange;
+      const copyright=document.querySelector('[data-copyright-year]');if(copyright)copyright.textContent=/^20\d{2}$/.test(String(site.copyrightYear))?String(site.copyrightYear):String(new Date().getFullYear());
+      const admissions=window.BUFF_CONTENT.admissions;
+      if(Number.isInteger(admissions?.year)&&admissions.year>=2020&&admissions.year<=2100){
+        const year=String(admissions.year);
+        for(const node of document.querySelectorAll('a[href="#admissions"],[data-module-open="admissions"]'))node.textContent=node.textContent.replace(/20\d{2}/g,year);
+        const section=document.getElementById('admissions');
+        if(section){const walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT);let current;while((current=walker.nextNode()))current.nodeValue=current.nodeValue.replace(/20\d{2}/g,year);
+          for(const node of section.querySelectorAll('[aria-label]'))node.setAttribute('aria-label',node.getAttribute('aria-label').replace(/20\d{2}/g,year));
+          for(const link of section.querySelectorAll('a[target="_blank"]'))if(/^https:\/\//.test(admissions.source||''))link.href=admissions.source;
+        }
+      }
       if(values.sectionArticles)for(const [key,article]of Object.entries(values.sectionArticles)){
         if(!['initial-study','reexamination','employment','about'].includes(key))continue;
         const target=document.querySelector('#'+key+' .container');if(!target)continue;

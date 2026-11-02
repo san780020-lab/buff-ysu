@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const context={window:{}};vm.createContext(context);vm.runInContext(fs.readFileSync('assets/js/admin-import.js','utf8'),context);
+const suggest=context.window.BUFF_IMPORT.suggest;
+const result=suggest('2028 自控全程班\n\n基础与强化课程\nA 班 2500元，B 班 ￥2200\n\nhttps://b23.tv/example',{title:'',body:[],priceLabel:'',url:''});
+assert.equal(result.fields.title,'2028 自控全程班');assert.equal(result.fields.body.length,3);assert.equal(result.fields.priceLabel,'2500元 / ￥2200');assert.equal(result.fields.url,'https://b23.tv/example');
+assert.equal(result.fields.year,undefined,'Do not infer a dataset year from poster text');
+assert.equal(result.fields.pricing,undefined,'Do not infer table rows or A/B service terms');
+const oldContact=suggest('课程介绍\n韦恩学长 QQ：1940908921\n桑桑哥 QQ：3298202133',{title:'',body:[]});
+assert.equal(oldContact.excluded,1);assert.ok(!JSON.stringify(oldContact.fields).includes('1940908921'));assert.ok(JSON.stringify(oldContact.fields).includes('3298202133'));
+assert.throws(()=>suggest('github_pat_test-secret',{title:''}),/令牌/);
+assert.throws(()=>suggest('  ',{title:''}),/为空/);
+console.log('PASS: conservative text suggestions, no inferred dates/tables, removed-contact filtering, empty and secret guard.');

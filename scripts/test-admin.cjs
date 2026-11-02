@@ -27,6 +27,9 @@ async function fixture(mode='success'){
   const {test,calls,elements}=await fixture();
   const valid={version:1,overrides:{analysis:{studentOrigins:{year:2027,sampleType:'机构学员样本',levels:[{label:'公办本科',percentage:100}],crossMajor:[{label:'非跨考',percentage:100}]}}}};
   test.validation(valid);
+  test.validation({version:1,overrides:{site:{examYear:2028,pastPaperRange:'2004–最新',copyrightYear:'自动'},admissions:{year:2028}}});
+  for(const site of [{examYear:0,pastPaperRange:'2004–最新'},{examYear:2028,pastPaperRange:'2004–最新',copyrightYear:'invalid'}])assert.throws(()=>test.validation({version:1,overrides:{site}}));
+  assert.throws(()=>test.validation({version:1,overrides:{admissions:{year:0}}}));
   const path='assets/uploads/remove-test.webp',keep='assets/uploads/keep-test.webp';
   const draft={promotions:[{id:'a',images:[path,keep],body:['保留正文']}],contact:{qrImage:path},courses:[{cover:path}],other:{images:[{src:path,alt:'待移除'},{src:keep,alt:'保留'}]}};
   const removed=test.stripAssetReferences(draft,path);

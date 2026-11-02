@@ -391,7 +391,7 @@
       if(item.joint) { const joint=element('span','admission-fill joint-fill'); joint.style.width=`${item.joint/max*100}%`; track.append(joint); }
       barRow.append(element('span','admission-bar-label',item.label),track,element('strong','admission-bar-value',item.joint?`${item.ordinary}＋${item.joint}`:String(item.ordinary))); chart.append(barRow);
     });
-    chart.append(element('p','admission-chart-note','蓝色：电气 · 紫色：控制 · 青色：中澳联合培养；人数来自 2027 年官方拟招生目录。'));
+    chart.append(element('p','admission-chart-note',`蓝色：电气 · 紫色：控制 · 青色：中澳联合培养；人数来自 ${data.year} 年官方拟招生目录。`));
     const verification=$('#admissions-verification');
     verification.replaceChildren(element('strong','','官网来源 · 人工核对后发布'),element('p','',`目录发布：${data.sourcePublishedAt}　最近核对：${data.verifiedAt}`),element('p','','由机构核对官网后手动更新。当前展示为已核对版本。'));
     verification.append(externalLink('查看官方目录 ↗',safeURL(data.source),'text-link'));
@@ -470,8 +470,8 @@
     'source-analysis': { title:'生源分析', subtitle:'2027 届机构学员样本 · 仅展示学校层次与跨考匿名汇总', sections:['source-analysis'] },
     employment: { title:'就业去向', subtitle:'研究生行业、单位、地区与继续深造', sections:['employment'] },
     textbooks: { title:'参考教材与考试范围', subtitle:'2027 · 两方向共同参考书与控制方向的现代控制增量', sections:['textbooks'] },
-    admissions: { title:'2027 年招生计划', subtitle:'电气与控制四类专业，普通培养与联合培养分列', sections:['admissions'] },
-    'admission-history': {title:'历年录取情况',subtitle:'2022—2025 · 电气工程 · 与 2027 拟招生计划分开展示',sections:['admission-history']},
+    admissions: { title:`${content.admissions.year} 年招生计划`, subtitle:'电气与控制四类专业，普通培养与联合培养分列', sections:['admissions'] },
+    'admission-history': {title:'历年录取情况',subtitle:`2022—2025 · 电气工程 · 与 ${content.admissions.year} 拟招生计划分开展示`,sections:['admission-history']},
     experiences: {title:'上岸经验',subtitle:'2026 届经验分享 · 在线阅读与下载',sections:['experiences']},
     news: { title:'院校消息', subtitle:'来自官网 · 保留原公告日期 · 核对后发布', sections:['news-center'] },
     promotions: { title:'BUFF 每日宣传', subtitle:'机构发布的课程、资料、公开课与备考活动', sections:['promotion-center'] },
@@ -664,7 +664,6 @@
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { threshold:.08 });
     $$('.showcase-card,.section-top').forEach(node => { node.classList.add('will-reveal'); observer.observe(node); });
   }
-  $('#copyright-year').textContent = String(new Date().getFullYear());
   const initialPage=parsePageHash();
   history.replaceState({buffPage:true,key:null,depth:0,scroll:0},'',location.href);
   if(initialPage)openModule(initialPage.key,{...initialPage.options,replace:true});

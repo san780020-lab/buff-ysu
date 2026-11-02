@@ -8,12 +8,17 @@
   const templates={courses:{id:'',subject:'all',stage:'initial',number:'',stageLabel:'',title:'',subtitle:'',audience:'',priceLabel:'',status:'',topics:[],previewTopics:[],materials:[],services:[],pricing:[],offer:'',source:'',poster:'',document:''},pricing:{label:'',price:'',note:''},documents:{title:'',description:'',stage:'initial',url:'',pages:0,size:'',body:[],images:[]},posters:{id:'',group:'full',stage:'initial',title:'',description:'',image:'',thumb:'',preview:'',screen:'',width:1000,height:1400},videos:{title:'',category:'',group:'control',platform:'bilibili',url:'',cover:'',description:''},dailyQuestions:{id:'',date:'',subject:'自控',title:'',question:'',image:'',knowledgePoint:'',bilibili:'',douyin:''},experiences:{title:'',description:'',year:2027,url:'',cover:'',pages:0,size:'',body:[],images:[]},promotions:{id:'',category:'机构宣传',title:'',summary:'',body:[],images:[],featured:false,module:'contact',actionLabel:'联系咨询'},news:{id:'',category:'院校消息',date:'',title:'',summary:'',body:[],sourceLabel:'',url:'',pinned:false},textbooks:{title:'',edition:'',author:'',publisher:'',image:'',tag:'',scope:''},people:{name:'',role:'',qq:''},programs:{code:'',name:'',degree:'',exam:'806',label:'',ordinary:0,joint:0},years:{year:2027,academic:{first:0,transfer:0,total:0},professional:{first:0,transfer:0,total:0}},levels:{label:'',percentage:0},crossMajor:{label:'',percentage:0},sections:{title:'',paragraphs:[]}};
   let token='',head='',base={},documentData={version:1,overrides:{}},modules=[],selected=null,dirty=false,busy=false,selectedAsset=null;
   const uploads=new Map();
+  Object.assign(labels,{images:'配图',examYear:'当前考研届别（如 2027、2028）',pastPaperRange:'首页历年真题范围',copyrightYear:'底部版权年份（填“自动”或具体年份）'});
+  const openRows=new Map();
+  const primaryFields=new Set(['title','name','label','description','body','paragraphs','intro','question','images','image','cover','url','bilibili','douyin','stage','subject','priceLabel','pricing','price','note','topics','materials','services','percentage','levels','crossMajor','people','qq','qqGroup','programs','ordinary','joint','year','years','academic','professional','first','transfer','total','code','degree','exam','sections']);
+  primaryFields.add('examYear');primaryFields.add('pastPaperRange');primaryFields.add('copyrightYear');primaryFields.add('source');
   function status(message,error=false){$('#status').textContent=message;$('#status').classList.toggle('error',error);}
   function changed(){dirty=true;$('#draft-state').textContent='有未发布修改';$('#publish').disabled=!token||busy;}
   const pathGet=(object,path)=>path.reduce((value,key)=>value?.[key],object);
   function pathSet(object,path,value){let target=object;path.slice(0,-1).forEach(key=>target=target[key]??=( {} ));target[path.at(-1)]=value;}
-  function valueFor(module){return clone(pathGet(documentData.overrides,module.path)??pathGet(base,module.path));}
-  function update(value){pathSet(documentData.overrides,selected.path,value);changed();}
+  function valueFor(module){const value=pathGet(documentData.overrides,module.path)??pathGet(base,module.path);return clone(module.key==='site'?{...base.site,...value}:value);}
+  function moduleTitle(module){return module.key==='admissions'?'招生计划 · '+valueFor(module).year:module.title;}
+  function update(value){pathSet(documentData.overrides,selected.path,value);changed();if(selected.key==='admissions'){$('#editor-title').textContent=moduleTitle(selected);renderNav();}}
   async function api(path,method='GET',body){
     if(!token)throw new Error('请先连接管理身份');
     const response=await fetch('https://api.github.com'+path,{method,headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(45000),cache:'no-store'});
@@ -24,24 +29,33 @@
   function utf8Base64(text){const bytes=new TextEncoder().encode(text);let binary='';for(let offset=0;offset<bytes.length;offset+=8192)binary+=String.fromCharCode(...bytes.subarray(offset,offset+8192));return btoa(binary);}
   function decodeBase64(content){return new TextDecoder().decode(Uint8Array.from(atob(content.replace(/\s/g,'')),x=>x.charCodeAt(0)));}
   function blank(value){if(Array.isArray(value))return [];if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,blank(v)]));return typeof value==='boolean'?false:typeof value==='number'?0:'';}
-  function field(value,key,set,depth=0){
+  function field(value,key,set,depth=0,route=[]){
     const wrap=node('div',undefined,'field'),label=node('label',labels[key] || key);wrap.append(label);
     if(Array.isArray(value)&&(!value.length&&!templates[key]||value.length&&typeof value[0]!=='object')){
-      const input=node('textarea');input.value=value.join(['body','paragraphs'].includes(key)?'\n\n':'\n');input.setAttribute('aria-label',labels[key] || key);input.addEventListener('input',()=>set(input.value.split(['body','paragraphs'].includes(key)?/\n\s*\n/:/\n/).map(x=>x.trim()).filter(Boolean)));wrap.append(input);
-      if(key==='images')assetButton(wrap,path=>{const paths=input.value.split(/\n/).map(x=>x.trim()).filter(Boolean);paths.push(path);set(paths);input.value=paths.join('\n');});
+      if(key==='images'){
+        const gallery=node('div',undefined,'image-fields');value.forEach((path,index)=>{const card=node('div',undefined,'image-field'),image=node('img');image.src=uploads.get(path)?.url||path;image.alt='配图 '+(index+1);const remove=node('button','移除图片');remove.type='button';remove.addEventListener('click',()=>{value.splice(index,1);set(value);renderEditor();});card.append(image,remove);gallery.append(card);});wrap.append(gallery);
+        const add=node('button','＋ 上传或粘贴图片');add.type='button';add.addEventListener('click',()=>$('#file-input').click());wrap.append(add);assetButton(wrap,path=>{if(!value.includes(path))value.push(path);set(value);renderEditor();});
+        const advanced=node('details');advanced.append(node('summary','图片路径（高级）'));const input=node('textarea');input.value=value.join('\n');input.setAttribute('aria-label',labels[key]);input.addEventListener('input',()=>set(input.value.split(/\n/).map(x=>x.trim()).filter(Boolean)));advanced.append(input);wrap.append(advanced);
+      }else{const input=node('textarea');input.value=value.join(['body','paragraphs'].includes(key)?'\n\n':'\n');input.setAttribute('aria-label',labels[key] || key);input.addEventListener('input',()=>set(input.value.split(['body','paragraphs'].includes(key)?/\n\s*\n/:/\n/).map(x=>x.trim()).filter(Boolean)));wrap.append(input);}
     } else if(Array.isArray(value)){
+      const rowKey=selected.key+':'+route.join('.');if(!openRows.has(rowKey)&&value.length)openRows.set(rowKey,key==='promotions'?Math.max(0,value.findIndex(item=>item.featured)):0);
       value.forEach((item,index)=>{
-        const group=node('fieldset',undefined,'object-group');group.append(node('legend',`${index+1} · ${item.title || item.label || item.name || item.year || labels[key] || ''}`));
-        group.append(field(item,'',next=>{value[index]=next;set(value);},depth+1));
+        const group=node('details',undefined,'object-group');group.open=openRows.get(rowKey)===index;const heading=node('summary',`${item.featured?'首页主推 · ':''}${item.title || item.label || item.name || item.year || '未命名条目'}`);group.append(heading);
+        group.addEventListener('toggle',()=>{if(group.open){openRows.set(rowKey,index);for(const sibling of wrap.children)if(sibling!==group&&sibling.classList.contains('object-group'))sibling.open=false;}else if(openRows.get(rowKey)===index)openRows.set(rowKey,-1);});
+        group.append(field(item,'',next=>{value[index]=next;set(value);heading.textContent=(next.featured?'首页主推 · ':'')+(next.title||next.label||next.name||next.year||'未命名条目');},depth+1,[...route,index]));
         const actions=node('div',undefined,'row-actions');
-        [['↑',()=>{if(index>0)[value[index-1],value[index]]=[value[index],value[index-1]];}],['↓',()=>{if(index<value.length-1)[value[index+1],value[index]]=[value[index],value[index+1]];}],['移除本条',()=>value.splice(index,1)]].forEach(([text,action])=>{const button=node('button',text);button.type='button';button.addEventListener('click',()=>{action();set(value);renderEditor();});actions.append(button);});group.append(actions);wrap.append(group);
+        if(key==='promotions'){const feature=node('button',item.featured?'当前首页宣传':'设为首页宣传');feature.type='button';feature.disabled=item.featured;feature.addEventListener('click',()=>{value.forEach((entry,i)=>entry.featured=i===index);set(value);renderEditor();});actions.append(feature);}
+        [['↑',()=>{if(index>0){[value[index-1],value[index]]=[value[index],value[index-1]];openRows.set(rowKey,index-1);}}],['↓',()=>{if(index<value.length-1){[value[index+1],value[index]]=[value[index],value[index+1]];openRows.set(rowKey,index+1);}}],['移除本条',()=>{value.splice(index,1);openRows.set(rowKey,Math.min(index,value.length-1));}]].forEach(([text,action])=>{const button=node('button',text);button.type='button';button.addEventListener('click',()=>{action();set(value);renderEditor();});actions.append(button);});group.append(actions);wrap.append(group);
       });
-      const add=node('button','＋ 添加一条','add-row');add.type='button';add.addEventListener('click',()=>{const item=clone(templates[key] || blank(value[0] || {}));if(Object.hasOwn(item,'id'))item.id='item-'+Date.now().toString(36);value.push(item);set(value);renderEditor();});wrap.append(add);
+      const add=node('button',key==='promotions'?'＋ 发布新宣传':'＋ 添加一条','add-row');add.type='button';add.addEventListener('click',()=>{const item=clone(templates[key] || blank(value[0] || {}));if(Object.hasOwn(item,'id'))item.id='item-'+Date.now().toString(36)+'-'+crypto.randomUUID().slice(0,6);if(key==='promotions'){value.forEach(entry=>entry.featured=false);item.featured=true;value.unshift(item);openRows.set(rowKey,0);}else{value.push(item);openRows.set(rowKey,value.length-1);}set(value);renderEditor();});wrap.append(add);
     } else if(value&&typeof value==='object'){
+      label.remove();const advanced=node('details',undefined,'advanced-fields');advanced.append(node('summary','更多设置（分类、链接与详细配置）'));let advancedCount=0;
       for(const [child,item]of Object.entries(value)){
         if(['placeholder','pageImages','width','height','coverStyle','levelSource'].includes(child))continue;
-        wrap.append(field(item,child,next=>{value[child]=next;set(value);},depth+1));
-      }
+        const combinedBody=selected.key==='promotions'&&child==='body'&&value.summary;
+        const childField=field(combinedBody?[value.summary,...item]:item,child,next=>{value[child]=next;if(combinedBody)value.summary='';set(value);},depth+1,[...route,child]);
+        if(primaryFields.has(child)&&!(selected.key==='promotions'&&!['title','body','images'].includes(child)))wrap.append(childField);else if(item&&typeof item==='object'&&!Array.isArray(item)){const section=node('details',undefined,'object-section');section.append(node('summary',item.title||item.label||labels[child]||child),childField);wrap.append(section);}else{advanced.append(childField);advancedCount++;}
+      }if(advancedCount)wrap.append(advanced);
     } else {
       let input;
       if(choices[key]){input=node('select');for(const [v,title]of choices[key]){const option=node('option',title);option.value=v;input.append(option);}if(!choices[key].some(x=>x[0]===String(value))) {const option=node('option',value || '未设置');option.value=value || '';input.append(option);}input.value=value;}
@@ -49,7 +63,8 @@
       else if(typeof value==='number'){input=node('input');input.type='number';input.min='0';if(key==='percentage')input.max='100';input.value=value;}
       else{input=node(['description','subtitle','audience','question','intro','teachers','offer','scope','levelDefinition','crossDefinition'].includes(key)||(value || '').length>80?'textarea':'input');input.value=value??'';}
       input.setAttribute('aria-label',labels[key] || key || '内容');input.addEventListener('input',()=>set(typeof value==='boolean'?input.checked:typeof value==='number'?Number(input.value):input.value));wrap.append(input);
-      if(['image','images','cover','thumb','preview','screen','url','document','qrImage'].includes(key))assetButton(wrap,path=>{input.value=path;set(path);});
+      if(['image','cover','qrImage'].includes(key)&&value){const image=node('img',undefined,'single-preview');image.src=uploads.get(value)?.url||value;image.alt=labels[key]||key;wrap.prepend(image);}
+      if(['image','images','cover','thumb','preview','screen','url','document','qrImage'].includes(key))assetButton(wrap,path=>{input.value=path;set(path);renderEditor();});
     }
     return wrap;
   }
@@ -73,13 +88,25 @@
     $('#file-input').value='';refreshAssets();
     status(result.count?'已移除素材，并清除草稿中对应的图片 / 文件引用。':'已移除未使用的素材。');
   }
-  function renderEditor(){if(!selected)return;$('#editor-title').textContent=selected.title;$('#editor-description').textContent=selected.description || '修改表单后可预览，确认内容再发布。';$('#module-count').textContent=`${modules.indexOf(selected)+1} / ${modules.length} 个模块`;const value=valueFor(selected);$('#editor').replaceChildren(field(value,selected.path.at(-1),update));$('#module-list').querySelectorAll('button').forEach(button=>button.setAttribute('aria-current',String(button.dataset.key===selected.key)));}
+  function renderEditor(){if(!selected)return;$('#editor-title').textContent=moduleTitle(selected);$('#editor-description').textContent=selected.description || '展开要编辑的条目，常用信息直接填写；详细配置在“更多设置”中。';$('#module-count').textContent=`${modules.indexOf(selected)+1} / ${modules.length} 个模块`;const value=valueFor(selected);$('#editor').replaceChildren(field(value,selected.path.at(-1),update));$('#module-list').querySelectorAll('button').forEach(button=>button.setAttribute('aria-current',String(button.dataset.key===selected.key)));}
   function showModule(module){selected=module;renderEditor();}
-  function renderNav(){const term=$('#module-search').value.trim();$('#module-list').replaceChildren();modules.filter(m=>m.title.includes(term)||m.description?.includes(term)).forEach(module=>{const button=node('button',module.title);button.dataset.key=module.key;button.addEventListener('click',()=>showModule(module));$('#module-list').append(button);});}
+  function editingRecord(module=selected){const value=valueFor(module);if(Array.isArray(value)){const index=openRows.get(module.key+':');return Number.isInteger(index)&&index>=0&&value[index]?{value,record:value[index],index}:null;}return {value,record:value,index:null};}
+  function attachAsset(asset,module=selected){
+    if(module?.key==='studentOrigins'||module?.keys)return false;const target=editingRecord(module);if(!target||!target.record||typeof target.record!=='object')return false;
+    const record=target.record;if(asset.type==='pdf'&&['documents','experiences'].includes(module.key))record.url=asset.path;
+    else if(asset.type==='image'&&Array.isArray(record.images)){if(!record.images.includes(asset.path))record.images.push(asset.path);}
+    else if(asset.type==='image'&&Object.hasOwn(record,'image'))record.image=asset.path;
+    else if(asset.type==='image'&&Object.hasOwn(record,'cover'))record.cover=asset.path;else return false;
+    pathSet(documentData.overrides,module.path,target.value);changed();return true;
+  }
+  function renderNav(){const term=$('#module-search').value.trim();$('#module-list').replaceChildren();modules.filter(m=>moduleTitle(m).includes(term)||m.description?.includes(term)).forEach(module=>{const button=node('button',moduleTitle(module));button.dataset.key=module.key;button.setAttribute('aria-current',String(module===selected));button.addEventListener('click',()=>showModule(module));$('#module-list').append(button);});}
   function validation(data){
-    const allowed=new Set(['subjects','courses','videos','textbooks','news','promotions','posters','documents','experiences','dailyQuestions','contact','admissions','copy','analysis','readings','sectionArticles']);
+    const allowed=new Set(['site','subjects','courses','videos','textbooks','news','promotions','posters','documents','experiences','dailyQuestions','contact','admissions','copy','analysis','readings','sectionArticles']);
     if(!data||data.version!==1||!data.overrides||Array.isArray(data.overrides))throw new Error('不是有效的管理草稿');
     for(const key of Object.keys(data.overrides))if(!allowed.has(key))throw new Error('不支持的内容模块：'+key);
+    if(data.overrides.site){const site=data.overrides.site;if(!Number.isInteger(site.examYear)||site.examYear<2027||site.examYear>2100||typeof site.pastPaperRange!=='string'||site.pastPaperRange.length>30)throw new Error('请填写有效的考研届别和简短真题范围。');}
+    if(data.overrides.site?.copyrightYear!==undefined&&!/^(?:自动|auto|20\d{2})$/.test(String(data.overrides.site.copyrightYear)))throw new Error('版权年份请填“自动”或四位年份。');
+    if(data.overrides.admissions&&(!Number.isInteger(data.overrides.admissions.year)||data.overrides.admissions.year<2020||data.overrides.admissions.year>2100))throw new Error('请填写有效的招生计划年份。');
     const origins=data.overrides.analysis?.studentOrigins;
     if(origins){
       const safeKeys=new Set(['year','sampleType','levelDefinition','crossDefinition','levelSource','levels','crossMajor']);
@@ -93,7 +120,7 @@
   }
   function previewValue(value,target,key=''){
     if(Array.isArray(value)){for(const item of value){const section=node('article');previewValue(item,section,key);target.append(section);}return;}
-    if(value&&typeof value==='object'){for(const [k,v]of Object.entries(value)){if(['placeholder','pageImages','width','height','coverStyle','sourcePages'].includes(k))continue;previewValue(v,target,k);}return;}
+    if(value&&typeof value==='object'){for(const [k,v]of Object.entries(value)){if(['id','featured','pinned','module','placeholder','pageImages','width','height','coverStyle','sourcePages','thumb','screen','preview','number'].includes(k))continue;previewValue(v,target,k);}return;}
     if(value===''||value===false||value===undefined)return;
     if(typeof value==='string'&&/^assets\/.+\.(?:webp|png|jpg|jpeg)$/.test(value)){const image=node('img');image.src=uploads.get(value)?.url || value;image.alt=labels[key] || key;target.append(image);return;}
     const p=node(key==='title'?'h3':'p',String(value));if(key!=='title')p.prepend(node('small',(labels[key] || key)+'：'));target.append(p);
@@ -105,10 +132,12 @@
       if(asset.type==='image'){const image=node('img');image.src=asset.url;image.alt=asset.name;button.append(image);}
       button.append(node('span',asset.name),node('span',Math.ceil(asset.blob.size/1024)+' KB'));button.addEventListener('click',()=>{selectedAsset=asset;refreshAssets();});
       const remove=node('button','移除','asset-remove');remove.type='button';remove.setAttribute('aria-label','移除素材 '+asset.name);remove.addEventListener('click',()=>removeAsset(asset));
-      card.append(button,remove);list.append(card);
+      const recognize=node('button','识别文字','recognize-asset');recognize.type='button';recognize.addEventListener('click',()=>openRecognition(asset));
+      card.append(button,recognize,remove);list.append(card);
     }
   }
   async function addFiles(files){
+    const module=selected;if(module?.key==='studentOrigins')throw new Error('生源模块只编辑匿名百分比，请勿粘贴或上传原始登记信息。');let attached=0;
     for(const file of files){
       if(file.size>15*1024*1024)throw new Error('文件超过 15 MB，请先压缩或使用网盘分享链接。');
       const id='upload-'+Date.now().toString(36)+'-'+crypto.randomUUID().slice(0,8);let blob=file,type='pdf',ext='pdf';
@@ -116,8 +145,59 @@
         const bitmap=await createImageBitmap(file),scale=Math.min(1,1800/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.86));if(!blob||blob.type!=='image/webp')throw new Error('此浏览器不支持 WebP 压缩，请更换 Edge 或 Chrome。');type='image';ext='webp';
       }else if(file.type!=='application/pdf')throw new Error('仅支持 PNG、JPG、WebP 图片和 PDF，禁止上传原始生源表。');
       if([...uploads.values()].reduce((sum,item)=>sum+item.blob.size,blob.size)>35*1024*1024)throw new Error('本次素材合计超过 35 MB，请分批发布。');
-      const asset={name:file.name,path:`assets/uploads/${id}.${ext}`,blob,url:URL.createObjectURL(blob),type};uploads.set(asset.path,asset);selectedAsset=asset;
-    }refreshAssets();status('素材已准备，请选择对应字段并点击“使用选中素材”。素材会随内容一起发布。');
+      const asset={name:file.name,path:`assets/uploads/${id}.${ext}`,blob,recognitionBlob:file,url:URL.createObjectURL(blob),type};uploads.set(asset.path,asset);selectedAsset=asset;if(attachAsset(asset,module))attached++;
+    }if(attached&&selected===module)renderEditor();refreshAssets();document.querySelector('.upload-zone').open=true;status(attached?'素材已加入当前条目，可在图片旁移除；点击素材卡片的“识别文字”提取内容。':'素材已准备。先展开要编辑的条目，再使用素材；也可以点击“识别文字”。');
+  }
+  let recognition=null;
+  const recognitionNames={title:'标题',body:'正文',description:'说明',question:'题目文字',intro:'导语',priceLabel:'价格展示',bilibili:'B 站链接',douyin:'抖音链接',url:'链接'};
+  function stopRecognition(){if(!recognition)return;clearTimeout(recognition.timer);recognition.frame?.remove();recognition.frame=null;recognition.running=false;$('#start-recognition').disabled=false;$('#cancel-recognition').hidden=true;}
+  function openRecognition(asset){
+    if(selected.key==='studentOrigins'||selected.keys){status('此模块请直接修改文字或匿名百分比，不自动识别原始资料。',true);return;}
+    const target=editingRecord();if(!target){status('请先展开要填写的条目，或点击“添加一条”。',true);return;}
+    stopRecognition();recognition={asset,module:selected,index:target.index,id:crypto.randomUUID(),running:false};
+    $('#recognition-title').textContent='识别到草稿 · '+(target.record.title||moduleTitle(selected));$('#recognition-asset').textContent=asset.name;
+    $('#recognition-text').value='';$('#recognition-fields').replaceChildren();$('#recognition-note').textContent='在浏览器本地处理，不上传到识别服务。首次图片识别需加载约 9 MB 的引擎和字库。';
+    $('#recognition-pages-row').hidden=asset.type!=='pdf';$('#apply-recognition').disabled=true;$('#recognition-dialog').showModal();
+  }
+  async function startRecognition(){
+    const job=recognition;if(!job||job.running)return;job.running=true;$('#start-recognition').disabled=true;$('#cancel-recognition').hidden=false;$('#recognition-fields').replaceChildren();$('#apply-recognition').disabled=true;
+    $('#recognition-note').textContent='正在加载本地识别引擎…';
+    const frame=node('iframe');frame.hidden=true;frame.title='本地文字识别引擎';frame.setAttribute('sandbox','allow-scripts allow-same-origin');frame.src='admin-recognizer.html?v=20261102-import1';job.frame=frame;
+    job.timer=setTimeout(()=>{if(recognition===job&&job.running){stopRecognition();$('#recognition-note').textContent='识别超时。可减少 PDF 页数后重试，或直接粘贴文字。';}},240000);
+    document.body.append(frame);
+  }
+  function recognitionSuggestions(){
+    const job=recognition;if(!job)return;const root=valueFor(job.module),record=job.index===null?root:root[job.index];const area=$('#recognition-fields');area.replaceChildren();
+    try{
+      const result=window.BUFF_IMPORT.suggest($('#recognition-text').value,record);job.fields=[];
+      for(const [key,value]of Object.entries(result.fields)){
+        const group=node('div',undefined,'recognition-field'),label=node('label'),check=node('input');check.type='checkbox';check.checked=Array.isArray(record[key])?!record[key].length:!record[key];label.append(check,document.createTextNode(' 填入'+(recognitionNames[key]||labels[key]||key)));
+        const input=node('textarea');input.value=Array.isArray(value)?value.join('\n\n'):value;input.setAttribute('aria-label','识别建议：'+(recognitionNames[key]||key));group.append(label,input);area.append(group);job.fields.push({key,input,check,array:Array.isArray(value)});
+      }
+      $('#apply-recognition').disabled=!job.fields.length;
+      $('#recognition-note').textContent=job.fields.length?'请核对文字、价格、年份和联系方式，勾选要填入的字段。已有内容默认不覆盖。'+(result.excluded?' 已排除旧海报中被要求移除的联系人行。':''):'这个模块没有可自动填入的字段。可复制识别文字，手动填写对应栏目。';
+    }catch(error){$('#recognition-note').textContent=error.message;$('#apply-recognition').disabled=true;}
+  }
+  async function handleRecognitionMessage(event){
+    const job=recognition;if(!job?.running||event.source!==job.frame?.contentWindow||event.origin!==location.origin||event.data?.channel!=='buff-recognition')return;
+    const data=event.data;
+    if(data.type==='ready'){
+      try{const bytes=await job.asset.recognitionBlob.arrayBuffer();if(recognition!==job||!job.running)return;job.frame.contentWindow.postMessage({channel:'buff-recognition',type:'start',id:job.id,mime:job.asset.recognitionBlob.type,bytes,maxPages:Number($('#recognition-pages').value)},location.origin,[bytes]);}catch(error){stopRecognition();$('#recognition-note').textContent=error.message;}return;
+    }
+    if(data.id!==job.id)return;
+    if(data.type==='progress'){
+      const names={'loading tesseract core':'加载识别引擎','initializing tesseract':'初始化识别引擎','loading language traineddata':'加载中英文字库','initializing api':'准备识别','recognizing text':'识别文字'};
+      $('#recognition-note').textContent=(names[data.message]||data.message)+(Number.isFinite(data.progress)?' · '+Math.round(data.progress*100)+'%':'');
+    }else if(data.type==='result'){
+      $('#recognition-text').value=String(data.text||'').slice(0,120000);stopRecognition();recognitionSuggestions();
+      if(data.total>data.pages)$('#recognition-note').textContent=`已读取前 ${data.pages} / ${data.total} 页；其余页未识别。`+$('#recognition-note').textContent;
+    }else if(data.type==='error'){stopRecognition();$('#recognition-note').textContent='识别失败：'+String(data.message||'请重试或手动粘贴文字。');}
+  }
+  function applyRecognition(){
+    const job=recognition;if(!job||job.running)return;const value=valueFor(job.module),record=job.index===null?value:value[job.index];let count=0;
+    for(const {key,input,check,array}of job.fields||[])if(check.checked){record[key]=array?input.value.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean):input.value.trim();if(key==='body'&&job.module.key==='promotions')record.summary='';count++;}
+    if(!count){$('#recognition-note').textContent='请先勾选要填入的字段。';return;}
+    pathSet(documentData.overrides,job.module.path,value);changed();renderEditor();$('#recognition-dialog').close();status(`已将 ${count} 个字段填入草稿。请预览确认，再发布。`);
   }
   async function publish(){
     if(!token||busy)return;
@@ -155,17 +235,18 @@
   }
   async function loadBase(){
     const [analysis,managed,html,promotion,images]=await Promise.all([fetch('assets/data/analysis.json',{cache:'no-cache'}).then(r=>r.json()),fetch(DATA,{cache:'no-cache'}).then(r=>r.json()),fetch('index.html',{cache:'no-cache'}).then(r=>r.text()),fetch('assets/data/daily-promotion.txt',{cache:'no-cache'}).then(r=>r.text()),fetch('assets/data/daily-promotion-images.json',{cache:'no-cache'}).then(r=>r.json())]);
-    base={...clone(window.BUFF_CONTENT),analysis,readings:clone(window.BUFF_READING),copy:{},sectionArticles:{}};documentData=managed;validation(documentData);
+    base={...clone(window.BUFF_CONTENT),site:{examYear:2027,pastPaperRange:'2004–最新',copyrightYear:'自动'},analysis,readings:clone(window.BUFF_READING),copy:{},sectionArticles:{}};documentData=managed;validation(documentData);
     if(!Object.hasOwn(documentData.overrides,'promotions')){const lines=promotion.trim().split(/\r?\n/),title=lines.shift();const paragraphs=lines.join('\n').trim().split(/\n\s*\n/);base.promotions.forEach(item=>item.featured=false);base.promotions.unshift({...clone(templates.promotions),id:'daily-pasted',title,summary:paragraphs[0],body:paragraphs.slice(1),images,featured:true});}
     for(const key of ['courses','documents','posters','videos','dailyQuestions','experiences','promotions','news','textbooks'])base[key]=base[key].map(item=>({...clone(templates[key]),...item}));
     modules=[['每日宣传','promotions'],['课程与价格','courses'],['初试 / 复试 PDF 资料','documents'],['课程海报','posters'],['每日一题','dailyQuestions'],['公开课 / 视频','videos'],['上岸经验与附件','experiences'],['参考教材与范围','textbooks'],['2027 招生计划','admissions'],['院校消息','news'],['联系方式与平台主页','contact'],['两条备考路线','subjects'],['文字阅读版','readings']].map(([title,key])=>({title,key,path:[key]}));
+    modules.unshift({title:'届别与首页年份',key:'site',path:['site'],description:'换届时把 2027 改成 2028，即可更新首页届别。原课程、视频、海报和招生数据的年份需按新资料分别核对，避免把旧数据标成新一届。'});
     modules.push({title:'生源分析（仅百分比）',key:'studentOrigins',path:['analysis','studentOrigins'],description:'只编辑类别和百分比；禁止样本人数、姓名、院校名单、QQ 等原始信息。'},{title:'历年录取数据',key:'admissionHistory',path:['analysis','admissionHistory']});
     const parsed=new DOMParser().parseFromString(html,'text/html'),groups=new Map();
     for(const element of parsed.querySelectorAll('[data-edit-key]')){const key=element.dataset.editKey,group=element.dataset.editGroup || '页面文字';base.copy[key]=element.textContent;labels[key]=element.textContent.trim().slice(0,36);groups.has(group)||groups.set(group,[]);groups.get(group).push(key);}
     // Copy sections are normal forms as well; only stable, annotated text is writable.
     for(const [group,keys]of groups){const path=['copy'];const module={title:group+' · 页面文字',key:'copy-'+group,path,keys};modules.push(module);}
     for(const [id,title]of [['initial-study','初试图文补充'],['reexamination','复试图文补充'],['employment','就业去向图文'],['about','机构图文介绍']]){base.sectionArticles[id]={title:'',body:[],images:[]};modules.push({title,key:id,path:['sectionArticles',id],description:'可粘贴正文、上传图片，显示在对应栏目。页面原有说明可在“页面文字”中修改。'});}
-    renderNav();showModule(modules[0]);status('已读取网站内容。可以先编辑预览；连接身份后才能发布。');
+    renderNav();showModule(modules[0]);status('已读取网站内容。换届先改“届别与首页年份”；连接身份后才能发布。');
   }
   // Only expose the current copy group's fields, while preserving other groups.
   const originalRender=renderEditor;
@@ -182,7 +263,14 @@
   $('#module-search').addEventListener('input',renderNav);$('#editor').addEventListener('submit',event=>event.preventDefault());
   $('#file-input').addEventListener('change',event=>addFiles([...event.target.files]).catch(error=>status(error.message,true)));
   document.addEventListener('paste',event=>{if(event.target===$('#token'))return;const files=[...event.clipboardData.items].filter(item=>item.kind==='file').map(item=>item.getAsFile()).filter(Boolean);if(files.length){event.preventDefault();addFiles(files).catch(error=>status(error.message,true));}});
-  $('#preview').addEventListener('click',()=>{const target=$('#preview-content');target.replaceChildren(node('h2',selected.title));const value=valueFor(selected);previewValue(selected.keys?Object.fromEntries(selected.keys.map(key=>[key,value[key]])):value,target);$('#preview-dialog').showModal();});
+  $('#start-recognition').addEventListener('click',startRecognition);
+  window.addEventListener('message',handleRecognitionMessage);
+  $('#cancel-recognition').addEventListener('click',()=>{stopRecognition();$('#recognition-note').textContent='已取消识别，草稿未修改。';});
+  $('#recognition-suggest').addEventListener('click',recognitionSuggestions);
+  $('#apply-recognition').addEventListener('click',applyRecognition);
+  $('#close-recognition').addEventListener('click',()=>$('#recognition-dialog').close());
+  $('#recognition-dialog').addEventListener('close',stopRecognition);
+  $('#preview').addEventListener('click',()=>{const target=$('#preview-content');target.replaceChildren(node('h2',moduleTitle(selected)));const value=valueFor(selected);previewValue(selected.keys?Object.fromEntries(selected.keys.map(key=>[key,value[key]])):Array.isArray(value)?editingRecord()?.record||{}:value,target);$('#preview-dialog').showModal();});
   $('#close-preview').addEventListener('click',()=>$('#preview-dialog').close());$('#publish').addEventListener('click',publish);
   $('#export-draft').addEventListener('click',()=>{const exported=clone(documentData),serialized=JSON.stringify(exported,null,2);if([...uploads.keys()].some(path=>serialized.includes(path))){status('草稿不含未上传素材，请保留原始图片；导入后需重新上传并替换对应素材路径。');}const blob=new Blob([serialized],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='buff-content-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   $('#import-draft').addEventListener('change',async event=>{try{const file=event.target.files[0];if(!file||file.size>900000)throw new Error('草稿文件为空或过大');const imported=JSON.parse(await file.text());validation(imported);documentData=imported;changed();renderEditor();status('已导入草稿，请逐项预览后发布。');}catch(error){status(error.message,true);}});
