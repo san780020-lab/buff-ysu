@@ -40,6 +40,7 @@ async function fixture(mode='success'){
   }
   assert.throws(()=>test.validation({version:1,overrides:{notAllowed:{}}}));
   assert.throws(()=>test.validation({version:1,overrides:{promotions:[{id:'x',title:'github_pat_test'}]}}));
+  for(const privateText of [String.fromCharCode(67,58,92)+'Users'+String.fromCharCode(92)+'example', ['person','gmail.com'].join('@')])assert.throws(()=>test.validation({version:1,overrides:{copy:{example:privateText}}}),/本机绝对路径或私人邮箱/);
   const pdf='assets/uploads/upload-test.pdf',page={preview:'assets/uploads/upload-test-preview.webp',full:'assets/uploads/upload-test-full.webp',width:1100,height:1600};
   const mediaDraft={version:1,overrides:{documents:[{url:pdf}],media:{readers:{[pdf]:{cover:'assets/uploads/upload-test-cover.webp',pages:[page]}},images:{}}}};
   test.validation(mediaDraft);

@@ -140,6 +140,7 @@
     for(const key of ['courses','posters','dailyQuestions','news','promotions'])if(data.overrides[key]){const ids=new Set();for(const item of data.overrides[key]){if(!/^[a-z0-9-]+$/.test(item.id || '')||ids.has(item.id))throw new Error(`${key} 的条目标识不能为空或重复，只用小写英文、数字、短横线。`);ids.add(item.id);}}
     if((data.overrides.promotions || []).filter(x=>x.featured).length>1)throw new Error('首页主推宣传只能选择一条');
     const serialized=JSON.stringify(data);if(/github_pat_|gh[pousr]_[A-Za-z0-9]{20}/.test(serialized))throw new Error('内容疑似包含访问令牌，已阻止发布');
+    if(/\b[A-Za-z]:[\\/](?!\/)|\/(?:Users|home)\/[a-z0-9._-]+|[a-z0-9._%+-]+@gmail\.com/i.test(serialized))throw new Error('内容包含本机绝对路径或私人邮箱，请移除后再发布。');
     if(new TextEncoder().encode(serialized).length>900000)throw new Error('文字内容过大，请把图片通过素材区上传');
   }
   function previewValue(value,target,key=''){
