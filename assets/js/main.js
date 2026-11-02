@@ -291,15 +291,15 @@
     window.clearTimeout(navCloseTimer);
     navGroups.forEach(group => {
       group.classList.remove('is-open');
-      group.querySelector('.nav-link').setAttribute('aria-expanded', 'false');
       group.querySelector('.nav-subtoggle').setAttribute('aria-expanded', 'false');
+      group.querySelector('.nav-subtoggle span').textContent = '＋';
     });
     document.body.classList.remove('nav-open'); $('.site-header').classList.remove('menu-active');
   }
   function openMega(group) {
     closeMega(); group.classList.add('is-open');
-    group.querySelector('.nav-link').setAttribute('aria-expanded', 'true');
     group.querySelector('.nav-subtoggle').setAttribute('aria-expanded', 'true');
+    group.querySelector('.nav-subtoggle span').textContent = '−';
     if (wideNav.matches) { document.body.classList.add('nav-open'); $('.site-header').classList.add('menu-active'); }
   }
   function closeMenu() {
@@ -307,18 +307,11 @@
     menuButton.setAttribute('aria-label', '打开导航'); document.body.classList.remove('mobile-nav-open');
   }
   navGroups.forEach(group => {
-    let pointerType = 'mouse';
-    group.addEventListener('pointerdown', event => { pointerType=event.pointerType; });
-    group.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') { pointerType='mouse'; openMega(group); } });
-    group.addEventListener('pointerleave', event => { if (event.pointerType === 'mouse') navCloseTimer = window.setTimeout(closeMega, 160); });
+    group.addEventListener('pointerenter', event => { if (wideNav.matches && event.pointerType === 'mouse') openMega(group); });
+    group.addEventListener('pointerleave', event => { if (wideNav.matches && event.pointerType === 'mouse') navCloseTimer = window.setTimeout(closeMega, 160); });
     group.addEventListener('focusin', event => { if (wideNav.matches && event.target.matches(':focus-visible')) openMega(group); });
-    group.addEventListener('focusout', event => { if (!group.contains(event.relatedTarget)) navCloseTimer = window.setTimeout(closeMega, 100); });
-    group.querySelector('.nav-link').addEventListener('click', event => {
-      if(pointerType==='mouse')return;
-      event.preventDefault(); event.stopPropagation();
-      const tapToggle = pointerType === 'touch' || pointerType === 'pen';
-      if (tapToggle && group.classList.contains('is-open')) closeMega(); else openMega(group);
-    });
+    group.addEventListener('focusout', event => { if (wideNav.matches && !group.contains(event.relatedTarget)) navCloseTimer = window.setTimeout(closeMega, 100); });
+    // Titles navigate for mouse, touch and pen; the separate button toggles submenus.
     group.querySelector('.nav-subtoggle').addEventListener('click', () => { if (group.classList.contains('is-open')) closeMega(); else openMega(group); });
     group.querySelector('.nav-link').addEventListener('keydown', event => {
       if (event.key !== 'ArrowDown') return;
