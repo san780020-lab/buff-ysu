@@ -242,9 +242,9 @@
     modules.unshift({title:'届别与首页年份',key:'site',path:['site'],description:'换届时把 2027 改成 2028，即可更新首页届别。原课程、视频、海报和招生数据的年份需按新资料分别核对，避免把旧数据标成新一届。'});
     modules.push({title:'生源分析（仅百分比）',key:'studentOrigins',path:['analysis','studentOrigins'],description:'只编辑类别和百分比；禁止样本人数、姓名、院校名单、QQ 等原始信息。'},{title:'历年录取数据',key:'admissionHistory',path:['analysis','admissionHistory']});
     const parsed=new DOMParser().parseFromString(html,'text/html'),groups=new Map();
-    for(const element of parsed.querySelectorAll('[data-edit-key]')){const key=element.dataset.editKey,group=element.dataset.editGroup || '页面文字';base.copy[key]=element.textContent;labels[key]=element.textContent.trim().slice(0,36);groups.has(group)||groups.set(group,[]);groups.get(group).push(key);}
+    for(const element of parsed.querySelectorAll('[data-edit-key]')){const key=element.dataset.editKey,group=element.dataset.editGroup || '页面文字';base.copy[key]=element.textContent;labels[key]=element.textContent.trim().slice(0,36);if(key==='hero-text-7')continue;groups.has(group)||groups.set(group,[]);groups.get(group).push(key);}
     // Copy sections are normal forms as well; only stable, annotated text is writable.
-    for(const [group,keys]of groups){const path=['copy'];const module={title:group+' · 页面文字',key:'copy-'+group,path,keys};modules.push(module);}
+    for(const [group,keys]of groups){const path=['copy'];const module={title:group+' · 页面文字',key:'copy-'+group,path,keys,description:group==='首页展示'?'首页届别与真题范围请在“届别与首页年份”中修改；这里编辑其他页面文案。':undefined};modules.push(module);}
     for(const [id,title]of [['initial-study','初试图文补充'],['reexamination','复试图文补充'],['employment','就业去向图文'],['about','机构图文介绍']]){base.sectionArticles[id]={title:'',body:[],images:[]};modules.push({title,key:id,path:['sectionArticles',id],description:'可粘贴正文、上传图片，显示在对应栏目。页面原有说明可在“页面文字”中修改。'});}
     renderNav();showModule(modules[0]);status('已读取网站内容。换届先改“届别与首页年份”；连接身份后才能发布。');
   }

@@ -37,5 +37,5 @@ for package, version, folder, select in PACKAGES:
             files.append({'path': str(target.relative_to(ROOT)).replace('\\', '/'), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)})
     manifest.append({'package': package, 'version': version, 'integrity': expected, 'files': files})
 ROOT.mkdir(parents=True, exist_ok=True)
-(ROOT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+(ROOT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8', newline='\n')
 print(json.dumps({'packages': len(manifest), 'bytes': sum(f['bytes'] for p in manifest for f in p['files'])}))
