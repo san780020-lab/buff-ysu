@@ -1,6 +1,7 @@
 // 网页整理版：依据仓库中已经公开的 PDF 摘页编写；不是逐字转录。
 window.BUFF_READING = {
   'assets/documents/ysu-2026-professional-fourth.pdf': {
+    images:['assets/readers/ysu-2026-professional-fourth-illustration.webp'],
     intro:'2026 届电气专硕第四经验分享。按科目整理复习方法，具体细节可切换原图核对。',
     sections:[
       {title:'数学：基础、强化与冲刺',paragraphs:[
@@ -28,6 +29,7 @@ window.BUFF_READING = {
     ]
   },
   'assets/documents/ysu-2026-initial-third.pdf': {
+    images:['assets/readers/ysu-2026-initial-third-illustration.webp'],
     intro:'2026 届电气专硕第三经验分享。重点整理短期备考中的方法与踩坑提醒。',
     sections:[
       {title:'备考起点：把暑期利用好',paragraphs:[
@@ -59,6 +61,7 @@ window.BUFF_READING = {
     ]
   },
   'assets/documents/ysu-2026-academic-second.pdf': {
+    images:['assets/readers/ysu-2026-academic-second-illustration.webp'],
     intro:'2026 届电气学硕第二经验分享。按数学、专业课、英语、政治与复试整理。',
     sections:[
       {title:'数学基础：用 A4 纸串起知识框架',paragraphs:[
