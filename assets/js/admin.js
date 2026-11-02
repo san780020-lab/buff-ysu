@@ -8,12 +8,13 @@
   const templates={courses:{id:'',subject:'all',stage:'initial',number:'',stageLabel:'',title:'',subtitle:'',audience:'',priceLabel:'',status:'',topics:[],previewTopics:[],materials:[],services:[],pricing:[],offer:'',source:'',poster:'',document:''},pricing:{label:'',price:'',note:''},documents:{title:'',description:'',stage:'initial',url:'',pages:0,size:'',body:[],images:[]},posters:{id:'',group:'full',stage:'initial',title:'',description:'',image:'',thumb:'',preview:'',screen:'',width:1000,height:1400},videos:{title:'',category:'',group:'control',platform:'bilibili',url:'',cover:'',description:''},dailyQuestions:{id:'',date:'',subject:'自控',title:'',question:'',image:'',knowledgePoint:'',bilibili:'',douyin:''},experiences:{title:'',description:'',year:2027,url:'',cover:'',pages:0,size:'',body:[],images:[]},promotions:{id:'',category:'机构宣传',title:'',summary:'',body:[],images:[],featured:false,module:'contact',actionLabel:'联系咨询'},news:{id:'',category:'院校消息',date:'',title:'',summary:'',body:[],sourceLabel:'',url:'',pinned:false},textbooks:{title:'',edition:'',author:'',publisher:'',image:'',tag:'',scope:''},people:{name:'',role:'',qq:''},programs:{code:'',name:'',degree:'',exam:'806',label:'',ordinary:0,joint:0},years:{year:2027,academic:{first:0,transfer:0,total:0},professional:{first:0,transfer:0,total:0}},levels:{label:'',percentage:0},crossMajor:{label:'',percentage:0},sections:{title:'',paragraphs:[]}};
   let token='',head='',base={},documentData={version:1,overrides:{}},modules=[],selected=null,dirty=false,busy=false,selectedAsset=null;
   const uploads=new Map();
+  let processing=false;
   Object.assign(labels,{images:'配图',examYear:'当前考研届别（如 2027、2028）',pastPaperRange:'首页历年真题范围',copyrightYear:'底部版权年份（填“自动”或具体年份）'});
   const openRows=new Map();
   const primaryFields=new Set(['title','name','label','description','body','paragraphs','intro','question','images','image','cover','url','bilibili','douyin','stage','subject','priceLabel','pricing','price','note','topics','materials','services','percentage','levels','crossMajor','people','qq','qqGroup','programs','ordinary','joint','year','years','academic','professional','first','transfer','total','code','degree','exam','sections']);
   primaryFields.add('examYear');primaryFields.add('pastPaperRange');primaryFields.add('copyrightYear');primaryFields.add('source');
   function status(message,error=false){$('#status').textContent=message;$('#status').classList.toggle('error',error);}
-  function changed(){dirty=true;$('#draft-state').textContent='有未发布修改';$('#publish').disabled=!token||busy;}
+  function changed(){dirty=true;$('#draft-state').textContent='有未发布修改';$('#publish').disabled=!token||busy||processing;}
   const pathGet=(object,path)=>path.reduce((value,key)=>value?.[key],object);
   function pathSet(object,path,value){let target=object;path.slice(0,-1).forEach(key=>target=target[key]??=( {} ));target[path.at(-1)]=value;}
   function valueFor(module){const value=pathGet(documentData.overrides,module.path)??pathGet(base,module.path);return clone(module.key==='site'?{...base.site,...value}:value);}
@@ -64,11 +65,11 @@
       else{input=node(['description','subtitle','audience','question','intro','teachers','offer','scope','levelDefinition','crossDefinition'].includes(key)||(value || '').length>80?'textarea':'input');input.value=value??'';}
       input.setAttribute('aria-label',labels[key] || key || '内容');input.addEventListener('input',()=>set(typeof value==='boolean'?input.checked:typeof value==='number'?Number(input.value):input.value));wrap.append(input);
       if(['image','cover','qrImage'].includes(key)&&value){const image=node('img',undefined,'single-preview');image.src=uploads.get(value)?.url||value;image.alt=labels[key]||key;wrap.prepend(image);}
-      if(['image','images','cover','thumb','preview','screen','url','document','qrImage'].includes(key))assetButton(wrap,path=>{input.value=path;set(path);renderEditor();});
+      if(['image','images','cover','thumb','preview','screen','url','document','qrImage'].includes(key))assetButton(wrap,path=>{input.value=path;set(path);if(selectedAsset&&(key==='url'||key==='image'))attachAsset(selectedAsset);renderEditor();});
     }
     return wrap;
   }
-  function assetButton(wrap,use){const button=node('button','使用选中素材','use-asset');button.type='button';button.addEventListener('click',()=>{if(!selectedAsset){status('请先在素材区选中一张图片或一个 PDF。',true);return;}use(selectedAsset.path);});wrap.append(button);}
+  function assetButton(wrap,use){const button=node('button','使用选中素材','use-asset');button.type='button';button.addEventListener('click',()=>{if(!selectedAsset){status('请先在素材区选中一张图片或一个 PDF。',true);return;}use(selectedAsset.path);registerMedia(selectedAsset);});wrap.append(button);}
   function stripAssetReferences(value,path){
     let count=0;
     function visit(item){
@@ -80,29 +81,52 @@
     return {value:visit(value),count};
   }
   function removeAsset(asset){
-    if(busy){status('正在发布，请等待完成后再移除素材。');return;}
-    const result=stripAssetReferences(documentData.overrides,asset.path);
-    documentData.overrides=result.value;uploads.delete(asset.path);URL.revokeObjectURL(asset.url);
+    if(busy||processing){status('正在处理素材或发布，请等待完成后再移除素材。');return;}
+    let count=0;
+    const media=documentData.overrides.media;
+    if(media){delete media.images?.[asset.path];delete media.readers?.[asset.path];}
+    for(const path of asset.paths||[asset.path]){const result=stripAssetReferences(documentData.overrides,path);documentData.overrides=result.value;count+=result.count;const member=uploads.get(path);if(member)URL.revokeObjectURL(member.url);uploads.delete(path);}
     if(selectedAsset===asset)selectedAsset=null;
-    if(result.count){changed();renderEditor();}
+    if(count||media){changed();renderEditor();}
     $('#file-input').value='';refreshAssets();
-    status(result.count?'已移除素材，并清除草稿中对应的图片 / 文件引用。':'已移除未使用的素材。');
+    status(count?'已移除素材及自动生成的预览，并清除草稿中的对应引用。':'已移除未使用的素材及预览。');
   }
   function renderEditor(){if(!selected)return;$('#editor-title').textContent=moduleTitle(selected);$('#editor-description').textContent=selected.description || '展开要编辑的条目，常用信息直接填写；详细配置在“更多设置”中。';$('#module-count').textContent=`${modules.indexOf(selected)+1} / ${modules.length} 个模块`;const value=valueFor(selected);$('#editor').replaceChildren(field(value,selected.path.at(-1),update));$('#module-list').querySelectorAll('button').forEach(button=>button.setAttribute('aria-current',String(button.dataset.key===selected.key)));}
   function showModule(module){selected=module;renderEditor();}
   function editingRecord(module=selected){const value=valueFor(module);if(Array.isArray(value)){const index=openRows.get(module.key+':');return Number.isInteger(index)&&index>=0&&value[index]?{value,record:value[index],index}:null;}return {value,record:value,index:null};}
   function attachAsset(asset,module=selected){
     if(module?.key==='studentOrigins'||module?.keys)return false;const target=editingRecord(module);if(!target||!target.record||typeof target.record!=='object')return false;
-    const record=target.record;if(asset.type==='pdf'&&['documents','experiences'].includes(module.key))record.url=asset.path;
+    const record=target.record;if(asset.type==='pdf'&&['documents','experiences'].includes(module.key)){record.url=asset.path;record.cover=asset.media.cover;record.pages=asset.media.pages.length;record.size=(asset.blob.size/1024/1024).toFixed(1)+' MB';}
     else if(asset.type==='image'&&Array.isArray(record.images)){if(!record.images.includes(asset.path))record.images.push(asset.path);}
     else if(asset.type==='image'&&Object.hasOwn(record,'image'))record.image=asset.path;
     else if(asset.type==='image'&&Object.hasOwn(record,'cover'))record.cover=asset.path;else return false;
-    pathSet(documentData.overrides,module.path,target.value);changed();return true;
+    if(asset.type==='image'&&module.key==='posters')Object.assign(record,{thumb:asset.media.thumb,screen:asset.media.screen,preview:asset.path,width:asset.media.width,height:asset.media.height});
+    pathSet(documentData.overrides,module.path,target.value);registerMedia(asset);changed();return true;
+  }
+  function registerMedia(asset){if(!asset.media)return;const media=documentData.overrides.media??={images:{},readers:{}};const key=asset.type==='pdf'?'readers':'images';(media[key]??={})[asset.path]=asset.media;changed();}
+  function pruneMedia(){
+    const media=documentData.overrides.media;if(!media)return;
+    const {media:ignored,...values}=documentData.overrides,referenced=JSON.stringify(values);
+    for(const key of ['images','readers'])for(const path of Object.keys(media[key]||{}))if(!referenced.includes(path))delete media[key][path];
   }
   function renderNav(){const term=$('#module-search').value.trim();$('#module-list').replaceChildren();modules.filter(m=>moduleTitle(m).includes(term)||m.description?.includes(term)).forEach(module=>{const button=node('button',moduleTitle(module));button.dataset.key=module.key;button.setAttribute('aria-current',String(module===selected));button.addEventListener('click',()=>showModule(module));$('#module-list').append(button);});}
   function validation(data){
-    const allowed=new Set(['site','subjects','courses','videos','textbooks','news','promotions','posters','documents','experiences','dailyQuestions','contact','admissions','copy','analysis','readings','sectionArticles']);
+    const allowed=new Set(['site','subjects','courses','videos','textbooks','news','promotions','posters','documents','experiences','dailyQuestions','contact','admissions','copy','analysis','readings','sectionArticles','media']);
     if(!data||data.version!==1||!data.overrides||Array.isArray(data.overrides))throw new Error('不是有效的管理草稿');
+    if(data.overrides.media){
+      const media=data.overrides.media,asset=(path,ext='webp')=>typeof path==='string'&&new RegExp('^assets/uploads/[a-z0-9-]+\\.'+ext+'$').test(path);
+      if(typeof media!=='object'||Array.isArray(media)||Object.keys(media).some(key=>!['images','readers'].includes(key)))throw new Error('预览索引格式错误。');
+      for(const key of ['images','readers']){
+        const rows=media[key]||{};if(typeof rows!=='object'||Array.isArray(rows))throw new Error('预览索引格式错误。');
+        for(const [path,item]of Object.entries(rows)){
+          if(!asset(path,key==='images'?'webp':'pdf')||!item||typeof item!=='object')throw new Error('预览文件路径无效。');
+          const pages=key==='readers'?item.pages:[item];
+          if(!Array.isArray(pages)||!pages.length||pages.length>100)throw new Error('预览页数无效。');
+          if(key==='readers'&&!asset(item.cover))throw new Error('PDF 封面路径无效。');
+          for(const page of pages){if(!page||!Number.isInteger(page.width)||page.width<1||page.width>3000||!Number.isInteger(page.height)||page.height<1||page.height>3000||!asset(page.preview)||!asset(key==='readers'?page.full:page.thumb)||key==='images'&&!asset(page.screen))throw new Error('预览尺寸或图片路径无效。');}
+        }
+      }
+    }
     for(const key of Object.keys(data.overrides))if(!allowed.has(key))throw new Error('不支持的内容模块：'+key);
     if(data.overrides.site){const site=data.overrides.site;if(!Number.isInteger(site.examYear)||site.examYear<2027||site.examYear>2100||typeof site.pastPaperRange!=='string'||site.pastPaperRange.length>30)throw new Error('请填写有效的考研届别和简短真题范围。');}
     if(data.overrides.site?.copyrightYear!==undefined&&!/^(?:自动|auto|20\d{2})$/.test(String(data.overrides.site.copyrightYear)))throw new Error('版权年份请填“自动”或四位年份。');
@@ -128,25 +152,40 @@
   function refreshAssets(){
     const list=$('#asset-list');list.replaceChildren();
     for(const asset of uploads.values()){
+      if(asset.generated)continue;
       const card=node('div',undefined,'asset-card'),button=node('button',undefined,'asset');button.type='button';button.setAttribute('aria-pressed',String(selectedAsset===asset));
-      if(asset.type==='image'){const image=node('img');image.src=asset.url;image.alt=asset.name;button.append(image);}
-      button.append(node('span',asset.name),node('span',Math.ceil(asset.blob.size/1024)+' KB'));button.addEventListener('click',()=>{selectedAsset=asset;refreshAssets();});
+      if(asset.thumbURL){const image=node('img');image.src=asset.thumbURL;image.alt=asset.name;button.append(image);}else if(asset.type==='image'){const image=node('img');image.src=asset.url;image.alt=asset.name;button.append(image);}
+      button.append(node('span',asset.name),node('span',asset.type==='pdf'?`已生成封面与 ${asset.media.pages.length} 页预览`:'已生成缩略图与阅读图'),node('span',Math.ceil((asset.paths||[asset.path]).reduce((sum,path)=>sum+(uploads.get(path)?.blob.size||0),0)/1024)+' KB（含预览）'));button.addEventListener('click',()=>{selectedAsset=asset;refreshAssets();});
       const remove=node('button','移除','asset-remove');remove.type='button';remove.setAttribute('aria-label','移除素材 '+asset.name);remove.addEventListener('click',()=>removeAsset(asset));
       const recognize=node('button','识别文字','recognize-asset');recognize.type='button';recognize.addEventListener('click',()=>openRecognition(asset));
       card.append(button,recognize,remove);list.append(card);
     }
   }
   async function addFiles(files){
+    if(processing||busy)throw new Error('正在处理素材或发布，请稍后再上传。');
     const module=selected;if(module?.key==='studentOrigins')throw new Error('生源模块只编辑匿名百分比，请勿粘贴或上传原始登记信息。');let attached=0;
-    for(const file of files){
-      if(file.size>15*1024*1024)throw new Error('文件超过 15 MB，请先压缩或使用网盘分享链接。');
-      const id='upload-'+Date.now().toString(36)+'-'+crypto.randomUUID().slice(0,8);let blob=file,type='pdf',ext='pdf';
-      if(['image/png','image/jpeg','image/webp'].includes(file.type)){
-        const bitmap=await createImageBitmap(file),scale=Math.min(1,1800/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.86));if(!blob||blob.type!=='image/webp')throw new Error('此浏览器不支持 WebP 压缩，请更换 Edge 或 Chrome。');type='image';ext='webp';
-      }else if(file.type!=='application/pdf')throw new Error('仅支持 PNG、JPG、WebP 图片和 PDF，禁止上传原始生源表。');
-      if([...uploads.values()].reduce((sum,item)=>sum+item.blob.size,blob.size)>35*1024*1024)throw new Error('本次素材合计超过 35 MB，请分批发布。');
-      const asset={name:file.name,path:`assets/uploads/${id}.${ext}`,blob,recognitionBlob:file,url:URL.createObjectURL(blob),type};uploads.set(asset.path,asset);selectedAsset=asset;if(attachAsset(asset,module))attached++;
-    }if(attached&&selected===module)renderEditor();refreshAssets();document.querySelector('.upload-zone').open=true;status(attached?'素材已加入当前条目，可在图片旁移除；点击素材卡片的“识别文字”提取内容。':'素材已准备。先展开要编辑的条目，再使用素材；也可以点击“识别文字”。');
+    processing=true;$('#editor').inert=true;$('#module-list').inert=true;$('#asset-list').inert=true;$('#file-input').disabled=true;$('#publish').disabled=true;$('#import-draft').disabled=true;$('#connect').disabled=true;
+    try{for(const file of files){
+      const id='upload-'+Date.now().toString(36)+'-'+crypto.randomUUID().slice(0,8);
+      const result=await generatePreviews(file,id,message=>status(file.name+'：'+message));
+      if([...uploads.values()].reduce((sum,item)=>sum+item.blob.size,0)+result.files.reduce((sum,item)=>sum+item.blob.size,0)>35*1024*1024)throw new Error('本次文件与预览合计超过 35 MB，请分批发布。');
+      for(const item of result.files)uploads.set(item.path,{...item,url:URL.createObjectURL(item.blob),generated:true});
+      const asset=uploads.get(result.path);Object.assign(asset,{name:file.name,type:result.type,media:result.media,recognitionBlob:file,generated:false,paths:result.files.map(item=>item.path)});
+      asset.thumbURL=uploads.get(result.media.cover||result.media.thumb)?.url;selectedAsset=asset;if(attachAsset(asset,module))attached++;
+    }status(attached?'素材与预览已自动加入当前条目。可预览后发布；识别文字仍需单独点击。':'预览已生成。展开条目并点击“使用选中素材”即可关联。');}
+    finally{processing=false;$('#editor').inert=false;$('#module-list').inert=false;$('#asset-list').inert=false;$('#file-input').disabled=false;$('#import-draft').disabled=false;$('#connect').disabled=false;$('#publish').disabled=!token||busy||!dirty;$('#file-input').value='';if(attached&&selected===module)renderEditor();refreshAssets();document.querySelector('.upload-zone').open=true;}
+  }
+  function generatePreviews(file,id,onProgress){
+    return new Promise((resolve,reject)=>{
+      const frame=node('iframe');frame.hidden=true;frame.setAttribute('sandbox','allow-scripts allow-same-origin');frame.src='admin-media.html?v=20261102-preview1';
+      let timer;const finish=(error,result)=>{clearTimeout(timer);window.removeEventListener('message',receive);frame.remove();error?reject(error):resolve(result);};
+      const arm=()=>{clearTimeout(timer);timer=setTimeout(()=>finish(new Error('预览生成超时，文件未加入草稿。请压缩或拆分后重试。')),120000);};
+      const receive=event=>{if(event.source!==frame.contentWindow||event.origin!==location.origin||event.data?.channel!=='buff-previews')return;const data=event.data;
+        if(data.type==='ready'){frame.contentWindow.postMessage({channel:'buff-previews',type:'start',id,file},location.origin);return;}
+        if(data.id!==id)return;if(data.type==='progress'){arm();onProgress(data.message);}else if(data.type==='result')finish(null,data.result);else if(data.type==='error')finish(new Error(data.message));
+      };
+      window.addEventListener('message',receive);arm();document.body.append(frame);
+    });
   }
   let recognition=null;
   const recognitionNames={title:'标题',body:'正文',description:'说明',question:'题目文字',intro:'导语',priceLabel:'价格展示',bilibili:'B 站链接',douyin:'抖音链接',url:'链接'};
@@ -200,9 +239,9 @@
     pathSet(documentData.overrides,job.module.path,value);changed();renderEditor();$('#recognition-dialog').close();status(`已将 ${count} 个字段填入草稿。请预览确认，再发布。`);
   }
   async function publish(){
-    if(!token||busy)return;
+    if(!token||busy||processing)return;
     try{
-      validation(documentData);busy=true;$('#publish').disabled=true;status('正在校验最新版本…');
+      pruneMedia();validation(documentData);busy=true;$('#publish').disabled=true;status('正在校验最新版本…');
       const user=await api('/user');if(user.login!==OWNER)throw new Error('只允许仓库所有者发布');
       const ref=await api(ROOT+'/git/ref/heads/'+BRANCH);if(ref.object.sha!==head)throw new Error('网站已有其他更新，请先导出草稿，再刷新连接并重新应用修改，避免覆盖。');
       const parent=await api(ROOT+'/git/commits/'+head),tree=[];
@@ -220,7 +259,9 @@
       const revision=Date.now().toString(36),indexNext=indexSource.replace(/assets\/js\/managed-data\.js\?v=[^"]+/,'assets/js/managed-data.js?v='+revision);
       const bundle='window.BUFF_MANAGED_DATA = '+JSON.stringify(documentData).replace(/</g,'\\u003c')+';\n';
       for(const [path,content]of [[DATA,serialized],['assets/js/managed-data.js',bundle],['index.html',indexNext]]){const blob=await api(ROOT+'/git/blobs','POST',{content:utf8Base64(content),encoding:'base64'});tree.push({path,mode:'100644',type:'blob',sha:blob.sha});}
-      const newTree=await api(ROOT+'/git/trees','POST',{base_tree:parent.tree.sha,tree});const commit=await api(ROOT+'/git/commits','POST',{message:'Update website content from BUFF management',tree:newTree.sha,parents:[head]});
+      const newTree=await api(ROOT+'/git/trees','POST',{base_tree:parent.tree.sha,tree});
+      const identity={name:OWNER,email:'240846609+san780020-lab@users.noreply.github.com'};
+      const commit=await api(ROOT+'/git/commits','POST',{message:'Update website content from BUFF management',tree:newTree.sha,parents:[head],author:identity,committer:identity});
       // A non-forced update rejects concurrent commits instead of overwriting them.
       await api(ROOT+'/git/refs/heads/'+BRANCH,'PATCH',{sha:commit.sha,force:false});head=commit.sha;dirty=false;window.__adminInitial=clone(documentData);$('#draft-state').textContent='内容已提交';
       status('内容已保存到仓库，正在请求 GitHub Pages 更新…');
@@ -234,9 +275,8 @@
     }catch(error){status(error.message,true);}finally{busy=false;$('#publish').disabled=!token||!dirty;}
   }
   async function loadBase(){
-    const [analysis,managed,html,promotion,images]=await Promise.all([fetch('assets/data/analysis.json',{cache:'no-cache'}).then(r=>r.json()),fetch(DATA,{cache:'no-cache'}).then(r=>r.json()),fetch('index.html',{cache:'no-cache'}).then(r=>r.text()),fetch('assets/data/daily-promotion.txt',{cache:'no-cache'}).then(r=>r.text()),fetch('assets/data/daily-promotion-images.json',{cache:'no-cache'}).then(r=>r.json())]);
+    const [analysis,managed,html]=await Promise.all([fetch('assets/data/analysis.json',{cache:'no-cache'}).then(r=>r.json()),fetch(DATA,{cache:'no-cache'}).then(r=>r.json()),fetch('index.html',{cache:'no-cache'}).then(r=>r.text())]);
     base={...clone(window.BUFF_CONTENT),site:{examYear:2027,pastPaperRange:'2004–最新',copyrightYear:'自动'},analysis,readings:clone(window.BUFF_READING),copy:{},sectionArticles:{}};documentData=managed;validation(documentData);
-    if(!Object.hasOwn(documentData.overrides,'promotions')){const lines=promotion.trim().split(/\r?\n/),title=lines.shift();const paragraphs=lines.join('\n').trim().split(/\n\s*\n/);base.promotions.forEach(item=>item.featured=false);base.promotions.unshift({...clone(templates.promotions),id:'daily-pasted',title,summary:paragraphs[0],body:paragraphs.slice(1),images,featured:true});}
     for(const key of ['courses','documents','posters','videos','dailyQuestions','experiences','promotions','news','textbooks'])base[key]=base[key].map(item=>({...clone(templates[key]),...item}));
     modules=[['每日宣传','promotions'],['课程与价格','courses'],['初试 / 复试 PDF 资料','documents'],['课程海报','posters'],['每日一题','dailyQuestions'],['公开课 / 视频','videos'],['上岸经验与附件','experiences'],['参考教材与范围','textbooks'],['2027 招生计划','admissions'],['院校消息','news'],['联系方式与平台主页','contact'],['两条备考路线','subjects'],['文字阅读版','readings']].map(([title,key])=>({title,key,path:[key]}));
     modules.unshift({title:'届别与首页年份',key:'site',path:['site'],description:'换届时把 2027 改成 2028，即可更新首页届别。原课程、视频、海报和招生数据的年份需按新资料分别核对，避免把旧数据标成新一届。'});
@@ -274,6 +314,6 @@
   $('#close-preview').addEventListener('click',()=>$('#preview-dialog').close());$('#publish').addEventListener('click',publish);
   $('#export-draft').addEventListener('click',()=>{const exported=clone(documentData),serialized=JSON.stringify(exported,null,2);if([...uploads.keys()].some(path=>serialized.includes(path))){status('草稿不含未上传素材，请保留原始图片；导入后需重新上传并替换对应素材路径。');}const blob=new Blob([serialized],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='buff-content-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   $('#import-draft').addEventListener('change',async event=>{try{const file=event.target.files[0];if(!file||file.size>900000)throw new Error('草稿文件为空或过大');const imported=JSON.parse(await file.text());validation(imported);documentData=imported;changed();renderEditor();status('已导入草稿，请逐项预览后发布。');}catch(error){status(error.message,true);}});
-  window.addEventListener('beforeunload',event=>{if(dirty||busy){event.preventDefault();event.returnValue='';}});
+  window.addEventListener('beforeunload',event=>{if(dirty||busy||processing){event.preventDefault();event.returnValue='';}});
   try{await loadBase();window.__adminInitial=clone(documentData);}catch(error){status('读取内容失败，请刷新：'+error.message,true);}
 })();

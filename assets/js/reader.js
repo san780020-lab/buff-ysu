@@ -3,7 +3,7 @@
   const manifest=window.BUFF_MEDIA?.readers || {},cache=new Map(),queue=[],active=new Set();
   let generation=0,cleanup=()=>{};
   const el=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;};
-  const safe=path=>/^assets\/(?:readers|experiences)\/[a-z0-9-]+\.webp$/.test(path || '');
+  const safe=path=>/^assets\/(?:readers|experiences|uploads)\/[a-z0-9-]+\.webp$/.test(path || '');
   const canPrefetch=()=>!navigator.connection?.saveData&&!/^(slow-)?2g$/.test(navigator.connection?.effectiveType || '');
   function pump(){
     queue.sort((a,b)=>a.priority-b.priority);
@@ -102,7 +102,7 @@
       if(/^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(page.placeholder || ''))image.src=page.placeholder;
       const status=el('span','reader-page-status','清晰页待加载'),retry=el('button','reader-page-retry','此页暂未加载，点击重试');retry.type='button';retry.hidden=true;
       retry.addEventListener('click',()=>{const quality=zoomed&&index===current?2:1;cache.delete(quality===2?page.full:page.preview);states[index].requested.delete(quality);ensure(index,quality,-1);});
-      figure.append(image,status,retry,el('figcaption','',`${index+1} / ${data.pages.length} · 原文页码 ${page.sourcePage}`));list.append(figure);figures.push(figure);states.push({page,image,figure,status,retry,shown:0,requested:new Set()});
+      figure.append(image,status,retry,el('figcaption','',`${index+1} / ${data.pages.length} · 原文页码 ${page.sourcePage??index+1}`));list.append(figure);figures.push(figure);states.push({page,image,figure,status,retry,shown:0,requested:new Set()});
     });
     function alignPage(index){
       const header=document.querySelector('.site-header').getBoundingClientRect().height;

@@ -1,7 +1,7 @@
 // Run security and atomic-publication checks without a live token or writes.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync('assets/js/admin.js','utf8').split("  $('#connect').addEventListener")[0]+`
-  window.TEST={validation,publish,stripAssetReferences,configure:values=>{token='test-only';head='base';documentData=values;},state:()=>({head,dirty,busy})};
+  window.TEST={validation,publish,stripAssetReferences,pruneMedia,configure:values=>{token='test-only';head='base';documentData=values;},state:()=>({head,dirty,busy})};
 })();`;
 async function fixture(mode='success'){
   const elements=new Map(),calls=[];
@@ -40,10 +40,17 @@ async function fixture(mode='success'){
   }
   assert.throws(()=>test.validation({version:1,overrides:{notAllowed:{}}}));
   assert.throws(()=>test.validation({version:1,overrides:{promotions:[{id:'x',title:'github_pat_test'}]}}));
+  const pdf='assets/uploads/upload-test.pdf',page={preview:'assets/uploads/upload-test-preview.webp',full:'assets/uploads/upload-test-full.webp',width:1100,height:1600};
+  const mediaDraft={version:1,overrides:{documents:[{url:pdf}],media:{readers:{[pdf]:{cover:'assets/uploads/upload-test-cover.webp',pages:[page]}},images:{}}}};
+  test.validation(mediaDraft);
+  for(const mutation of [d=>d.overrides.media.readers[pdf].pages[0].full='https://example.com/private.webp',d=>d.overrides.media.readers[pdf].pages=[],d=>d.overrides.media.readers[pdf].cover='../outside.webp',d=>d.overrides.media.readers[pdf].pages[0].width=Infinity]){const bad=structuredClone(mediaDraft);mutation(bad);assert.throws(()=>test.validation(bad));}
+  const pruned=structuredClone(mediaDraft);pruned.overrides.documents=[];test.configure(pruned);test.pruneMedia();assert.equal(Object.keys(pruned.overrides.media.readers).length,0,'Removed documents must not keep orphan preview files in future publications');
   test.configure(valid);await test.publish();
   const tree=calls.find(call=>call.url.endsWith('/git/trees')).body;
   assert.equal(tree.base_tree,'tree-base');assert.equal(tree.tree.length,3);assert.equal(tree.tree[0].path,'assets/data/managed-content.json');
   const ref=calls.find(call=>call.method==='PATCH').body;assert.equal(ref.force,false);assert.equal(ref.sha,'commit-new');
+  const commit=calls.find(call=>call.url.endsWith('/git/commits')&&call.method==='POST').body;
+  assert.equal(commit.author.email,'240846609+san780020-lab@users.noreply.github.com');assert.equal(commit.committer.email,commit.author.email,'Management commits must never default to a private account email');
   assert.match(elements.get('#status').textContent,/发布成功/);
   assert.ok(calls.every(call=>call.url.startsWith('https://api.github.com/')));
   for(const mode of ['unauthorized','conflict']){const other=await fixture(mode);other.test.configure(valid);await other.test.publish();assert.equal(other.calls.filter(call=>call.method!=='GET').length,0);assert.match(other.elements.get('#status').textContent,mode==='unauthorized'?/所有者/:/已有其他更新/);}

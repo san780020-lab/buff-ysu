@@ -3,12 +3,11 @@
 以深灰黑色为主、结合大幅展示与网格的机构宣传网站，纯 HTML / CSS / JavaScript，无需服务器、数据库、构建工具或付费依赖。托管在 GitHub Pages。
 
 - 网站：https://san780020-lab.github.io/buff-ysu/
-- 本地目录：`[project directory]`
 - 发布方式：`main` 分支的根目录。推送后 GitHub Pages 自动更新。
 
 ## 内容管理入口
 
-打开 [内容管理](https://san780020-lab.github.io/buff-ysu/admin.html)，或点击网站页脚的“内容管理”。不必在 GitHub 编辑文件。
+打开 [内容管理](https://san780020-lab.github.io/buff-ysu/admin.html)，或点击网站顶部的“内容管理”。不必在 GitHub 编辑文件。
 
 - 33 个管理模块：课程与价格、初试/复试资料、海报、每日一题、视频、经验分享、教材、招生、录取、生源百分比、联系方式、网页整理版，以及各栏目文字和图文。
 - 文字直接粘贴到表单；图片可粘贴或上传，自动压缩为 WebP，再用“使用选中素材”放到对应字段。PDF 上传后可以补充正文和配图，优先以网页形式阅读。
@@ -20,7 +19,7 @@
 
 详细步骤见 [管理入口使用说明](管理入口使用说明.md)。
 
-管理覆盖数据存储于 `assets/data/managed-content.json`，同步生成 `assets/js/managed-data.js`，后者与其他脚本并行加载，避免增加首屏数据请求等待。每次发布同步更新 HTML 中的数据版本号。修改底层 `content.js` 时须留意：已通过管理页接管的模块以管理数据为准。旧 Issue 宣传方式只在管理页尚未接管宣传时生效；今后建议统一使用管理入口。
+管理覆盖数据存储于 `assets/data/managed-content.json`，同步生成 `assets/js/managed-data.js`，后者与其他脚本并行加载，避免增加首屏数据请求等待。每次发布同步更新 HTML 中的数据版本号。修改底层 `content.js` 时须留意：已通过管理页接管的模块以管理数据为准。每日宣传统一通过管理入口维护。
 
 ## 阅读与手机显示
 
@@ -127,17 +126,9 @@ GitHub 仓库的 Settings → Pages → Build and deployment：选择 **Deploy f
 
 `assets/css/typography.css` 统一系统字体栈：Apple 设备优先系统字体、苹方，Windows 使用本机微软雅黑等回退字体，不下载大体积字体文件。课程正文、小字、导航和弹窗提高字号与灰阶对比度；标题采用更克制的字重和字距。
 
-## 每日宣传：粘贴文字与图片即可发布
+## 每日宣传
 
-1. 登录仓库所有者 **san780020-lab**，点击网站底部的 **发布宣传**，或打开 [宣传发布表单](https://github.com/san780020-lab/buff-ysu/issues/new?template=daily-promotion.yml)。
-2. 在“宣传内容”第一行写标题，空一行粘贴正文；图片直接粘贴、拖入或上传，等上传完成后点击 **Create / 创建**。
-3. GitHub Actions 自动同步宣传，随后 GitHub Pages 构建发布。通常等待数分钟后刷新首页即可。最新宣传替换首页置顶内容，不显示日期。
-
-修改已有宣传：打开自己之前的宣传 Issue，编辑正文并保存，也会重新发布。只修改文字且想保留图片时，不要删除正文里的图片链接。发布失败可在仓库 Actions → 发布每日宣传 查看结果，或手动运行并填写该 Issue 编号。
-
-仅所有者本人创建或编辑、且标题以 `[每日宣传]` 开头的 Issue 可触发发布。访客提交不能修改网站。发布使用 GitHub 内置短期令牌，前端不保存密码或访问令牌；不需要电脑常开。宣传和上传图片均为公开内容。图片最多 12 张，正文最多 20,000 字符，首行标题最多 150 字符。
-
-实现：`.github/ISSUE_TEMPLATE/daily-promotion.yml`、`.github/workflows/publish-promotion.yml`、`scripts/publish_promotion.py`。同步目标只有 `assets/data/daily-promotion.txt`、`assets/data/daily-promotion-images.json`。
+统一使用网站顶部的“内容管理 → 每日宣传”。展开条目后粘贴文字与图片，预览并发布。原有宣传已迁入管理数据，旧 Issue 发布流程已停用。
 
 ## 主题、语言与访问统计
 

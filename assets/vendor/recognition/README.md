@@ -1,6 +1,6 @@
 # Local recognition dependencies
 
-These dependencies are only loaded from `admin-recognizer.html` after the owner clicks Start recognition. They are not loaded by the public homepage. File bytes remain in the browser. No OCR provider endpoint or GitHub token is passed to this frame.
+These dependencies are loaded by `admin-recognizer.html` after Start recognition. PDF.js is also loaded by `admin-media.html` to generate PDF previews automatically on upload. They are not loaded by the public homepage. File bytes remain in the browser. No OCR provider endpoint or GitHub token is passed to either frame.
 
 - Tesseract.js 6.0.1: https://github.com/naptha/tesseract.js — Apache-2.0; license retained in `tesseract/LICENSE.md`.
 - Tesseract.js-core 6.0.0: https://github.com/naptha/tesseract.js-core — Apache-2.0; license retained in `core/LICENSE`.

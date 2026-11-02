@@ -136,6 +136,69 @@
       "admissions-text-2": "2027 年拟招生计划。",
       "admissions-text-3": "仅展示电气与控制四类专业",
       "admissions-text-4": "按学硕与专硕分别展示；电气专硕的国内普通培养和中澳联合培养单独列出。"
-    }
+    },
+    "promotions": [
+      {
+        "id": "daily-pasted",
+        "category": "机构宣传",
+        "title": "耗时18个月，终于可以公布了！",
+        "summary": "BUFF团队十年沉淀，呕心沥血一年半，只为服务莘莘学子。精心编制、反复打磨，内容全面升级，史上最大优化，《28电气考研电路全程班讲义》终于和大家见面！",
+        "body": [
+          "28讲义共分为基础讲义、强化讲义，为不同学习阶段量身打造。基础讲义部分打基础、夯根基、打通任督二脉。强化讲义部分抓重点、提能力、补短板、求突破。",
+          "BUFF团队2028电路讲义宣传。燕山大学2027电气与控制专业课信息请查看对应课程页面。"
+        ],
+        "images": [
+          "assets/promotions/2028-circuit-notes-1.webp",
+          "assets/promotions/2028-circuit-notes-2.webp",
+          "assets/promotions/2028-circuit-notes-3.webp",
+          "assets/promotions/2028-circuit-notes-4.webp"
+        ],
+        "featured": true,
+        "module": "contact",
+        "actionLabel": "联系咨询"
+      },
+      {
+        "id": "buff-trial-lessons",
+        "category": "课程试听",
+        "date": "2026-11-01",
+        "title": "先试听，再选择适合自己的课。",
+        "summary": "10 个试听入口已整理，自控、团队其他专业课与公共课分组查看。",
+        "body": [
+          "自动控制原理试听放在公开课窗口首位，便于了解自控课程的讲解方式。",
+          "电路、电分、数字与模拟电路、电力电子、电机学和公共课试听作为团队拓展资源单独分组；燕山大学 806 / 830 的专业课范围请以初试模块为准。"
+        ],
+        "module": "videos",
+        "actionLabel": "观看试听课",
+        "featured": false
+      },
+      {
+        "id": "buff-2027-study-materials",
+        "category": "课程资料",
+        "date": "2026-11-01",
+        "title": "2027 课程与资料，按阶段看清楚。",
+        "summary": "全程、强化、冲刺与资料答疑分别介绍，海报和课程说明均可展开查看。",
+        "body": [
+          "课程页面分别展示班型、课时、资料、价格和服务，不混用不同套餐的报价。",
+          "B 班包含专业课答疑，不包含数学答疑。资料答疑班的专业答疑仅限所赠送的内部资料。"
+        ],
+        "module": "courses",
+        "actionLabel": "了解课程安排",
+        "featured": false
+      },
+      {
+        "id": "buff-study-community",
+        "category": "备考交流",
+        "date": "2026-11-01",
+        "title": "备考有问题，联系桑桑哥。",
+        "summary": "课程、资料与拼团咨询，或加入 2027 燕大电气与控制考研交流群。",
+        "body": [
+          "桑桑哥 QQ：3298202133。2027 燕山大学电气与控制考研交流群：716928002。",
+          "具体开课时间、班型和活动安排可通过咨询入口进一步了解。"
+        ],
+        "module": "contact",
+        "actionLabel": "联系与加入交流群",
+        "featured": false
+      }
+    ]
   }
 }

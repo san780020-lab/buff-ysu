@@ -4,6 +4,7 @@
   const content = window.BUFF_CONTENT;
   if (!content) return;
   for(const poster of content.posters || [])Object.assign(poster,window.BUFF_MEDIA?.posters?.[poster.id] || {});
+  for(const poster of content.posters || []){const media=window.BUFF_MEDIA?.images?.[poster.image];if(media)Object.assign(poster,media);}
   for(const poster of content.posters || []){poster.thumb||=poster.image;poster.preview||=poster.image;poster.screen||=poster.image;}
   let selectedSubject = 'electrical';
   let selectedFilter = 'all';
@@ -31,6 +32,7 @@
   function safeAsset(value) {
     return /^assets\/(?:(?:posters|documents|images|books|experiences|promotions|readers|uploads)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
   }
+  function uploadedImage(path,kind='screen') {return safeAsset(window.BUFF_MEDIA?.images?.[path]?.[kind])||safeAsset(path);}
   function safePromotionImage(value) {
     if(safeAsset(value))return value;
     try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password&&((url.hostname==='github.com'&&url.pathname.startsWith('/user-attachments/assets/'))||url.hostname==='user-images.githubusercontent.com')?url.href:'';}catch{return '';}
@@ -178,6 +180,7 @@
     (content.documents || []).filter(document => (document.stage || 'initial') === selectedMaterialStage).forEach(document => {
       if (!safeAsset(document.url)) return;
       const card = element('article', 'document-card');
+      if(safeAsset(document.cover)){const cover=element('img','document-cover');cover.src=safeAsset(document.cover);cover.alt=document.title+'封面';cover.loading='lazy';cover.decoding='async';card.append(cover);}
       const body = element('div', 'document-card-body');
       body.append(element('span', 'document-label', document.pages?`PDF · ${document.pages} 页`:'PDF · 资料'), element('h3', '', document.title), element('p', '', document.description), element('small', 'document-source', [document.sourcePages,document.size].filter(Boolean).join(' · ')));
       const actions = element('div', 'document-actions');
@@ -417,7 +420,7 @@
     const featured=promotions.find(item=>item.featured) || promotions[0];
     $('#home-promotion').replaceChildren(...(featured?[updateButton(featured)]:[element('p','empty-state','机构动态待更新。')]));
     const banner=$('#home-promotion-banner'); banner.replaceChildren();
-    if(featured){const text=element('div','promo-banner-copy');if(featured.images?.length && safePromotionImage(typeof featured.images[0]==='string'?featured.images[0]:featured.images[0].src)){const source=featured.images[0],image=element('img','promo-banner-image');image.src=typeof source==='string'?source:source.src;image.alt=source.alt || '宣传图片';image.width=90;image.height=90;banner.append(image);}text.append(element('span','','BUFF 每日宣传'),element('strong','',featured.title));const action=element('button','button outline','展开查看 ›');action.type='button';action.dataset.updateId=featured.id;banner.append(text,action);}
+    if(featured){const text=element('div','promo-banner-copy');if(featured.images?.length && safePromotionImage(typeof featured.images[0]==='string'?featured.images[0]:featured.images[0].src)){const source=featured.images[0],image=element('img','promo-banner-image');image.src=uploadedImage(typeof source==='string'?source:source.src,'thumb')||(typeof source==='string'?source:source.src);image.alt=source.alt || '宣传图片';image.width=90;image.height=90;banner.append(image);}text.append(element('span','','BUFF 每日宣传'),element('strong','',featured.title));const action=element('button','button outline','展开查看 ›');action.type='button';action.dataset.updateId=featured.id;banner.append(text,action);}
     $('#news-list').replaceChildren(...news.map(item=>updateButton(item)));
     $('#promotion-list').replaceChildren(...promotions.map(item=>updateButton(item)));
     if(!news.length) $('#news-list').append(element('p','empty-state','暂未发布院校消息。'));
@@ -427,7 +430,7 @@
     (content.experiences || []).forEach(item=> {
       const card=element('article','experience-card');
       const preview=assetLink('',item.url,'experience-preview'); preview.setAttribute('aria-label',`阅读${item.title}`);
-      const image=element('img'); image.src=safeAsset(item.cover); image.alt=`${item.title}首页`; image.width=420; image.height=594; image.loading='lazy'; preview.append(image);
+      const image=element('img'); image.src=uploadedImage(item.cover,'thumb'); image.alt=`${item.title}首页`; image.width=420; image.height=594; image.loading='lazy'; preview.append(image);
       const info=element('div','experience-info');
       info.append(element('p','update-meta',`${item.year} 届 · ${item.pages} 页 · ${item.size}`),element('h3','',item.title),element('p','',item.description));
       const actions=element('div','update-actions');const download=assetLink('下载 PDF ↓',item.url,'text-link'); download.download=item.url.split('/').pop();
@@ -443,7 +446,7 @@
     const meta=element('p','update-meta',`${item.category}${isNews?' · '+item.date+' · '+item.sourceLabel:' · BUFF 团队'}`);
     article.append(meta,element('h2','',item.title),element('p','update-summary',item.summary));
     (item.body || []).forEach(text=>article.append(element('p','update-paragraph',text)));
-    if(item.images?.length){const gallery=element('div','promotion-image-gallery');item.images.forEach((source,index)=>{const path=typeof source==='string'?source:source.src;if(!safePromotionImage(path))return;const image=element('img');image.src=safePromotionImage(path);image.alt=source.alt || `宣传图片 ${index+1}`;image.loading=index?'lazy':'eager';image.decoding='async';gallery.append(image);});article.append(gallery);}
+    if(item.images?.length){const gallery=element('div','promotion-image-gallery');item.images.forEach((source,index)=>{const path=typeof source==='string'?source:source.src;if(!safePromotionImage(path))return;const image=element('img');image.src=uploadedImage(path)||safePromotionImage(path);image.alt=source.alt || `宣传图片 ${index+1}`;image.loading=index?'lazy':'eager';image.decoding='async';gallery.append(image);});article.append(gallery);}
     const actions=element('div','update-actions');
     if(item.module) { const button=element('button','button primary',item.actionLabel || '进一步了解'); button.type='button'; button.dataset.moduleOpen=item.module; actions.append(button); }
     if(safeURL(item.url)) actions.append(externalLink('查看官网原公告 ↗',safeURL(item.url),'button outline'));
@@ -538,7 +541,7 @@
         viewer.classList.add('experience-reader');
         const article=element('article','reading-article');article.append(element('p','',info?.description || '资料说明'));
         (info?.body || []).forEach(text=>article.append(element('p','',text)));
-        (info?.images || []).forEach(path=>{if(safeAsset(path)){const image=element('img');image.src=path;image.alt=info.title;image.loading='lazy';article.append(image);}});
+        (info?.images || []).forEach(path=>{if(safeAsset(path)){const image=element('img');image.src=uploadedImage(path);image.alt=info.title;image.loading='lazy';article.append(image);}});
         article.append(download);viewer.append(article);
       }
       moduleContent.append(viewer);
@@ -629,7 +632,7 @@
       const body = element('div','daily-question-body');
       body.append(element('span','daily-tag', [question.date, question.subject || '每日一题'].filter(Boolean).join(' · ')),element('h3','',question.title));
       if (question.question) body.append(element('p','',question.question));
-      if (safeAsset(question.image)) { const image=element('img'); image.src=question.image; image.alt=question.title; body.append(image); }
+      if (safeAsset(question.image)) { const image=element('img'); image.src=uploadedImage(question.image); image.alt=question.title; body.append(image); }
       if (question.knowledgePoint) body.append(element('p','daily-knowledge',`知识点：${question.knowledgePoint}`));
       if (questions.length > 1) {
         const label=element('label','daily-archive','查看往期题目'); const select=element('select'); select.setAttribute('aria-label','选择每日一题');
@@ -646,19 +649,6 @@
     show(questions[0]);
   }
   selectSubject(selectedSubject); renderDocuments(); renderPosters(); renderContact(); renderDaily(); renderTextbooks(); renderAdmissions(); renderUpdates(); renderExperiences();
-  if(!Object.hasOwn(window.BUFF_MANAGED?.overrides || {},'promotions'))fetch('assets/data/daily-promotion.txt',{cache:'no-cache'}).then(response=>{if(!response.ok)throw new Error('Promotion unavailable');return response.text();}).then(text=>{
-    const lines=text.trim().split(/\r?\n/),title=lines.shift()?.trim();if(!title)return;
-    const body=lines.join('\n').trim().split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);
-    content.promotions.forEach(item=>item.featured=false);
-    content.promotions.unshift({id:'daily-pasted',category:'机构宣传',title,summary:body[0] || '',body:body.slice(1),module:'contact',actionLabel:'联系咨询',featured:true,images:window.BUFF_PROMOTION_IMAGES || []});
-    renderUpdates();if(currentModule==='update-detail'&&currentUpdateID==='daily-pasted'){moduleContent.replaceChildren();renderUpdateDetail(currentUpdateID);}
-  }).catch(()=>{});
-  if(!Object.hasOwn(window.BUFF_MANAGED?.overrides || {},'promotions'))fetch('assets/data/daily-promotion-images.json',{cache:'no-cache'}).then(response=>response.ok?response.json():[]).then(images=>{
-    if(!Array.isArray(images))return;images=images.filter(image=>safePromotionImage(typeof image==='string'?image:image?.src));const latest=content.promotions.find(item=>item.id==='daily-pasted');if(latest)latest.images=images;
-    window.BUFF_PROMOTION_IMAGES=images;
-    renderUpdates();
-    if(currentModule==='update-detail'&&currentUpdateID==='daily-pasted'){moduleContent.replaceChildren();renderUpdateDetail(currentUpdateID);}
-  }).catch(()=>{});
   $$('[data-profile-links]').forEach(fillProfileLinks);
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { threshold:.08 });

@@ -82,3 +82,5 @@ html[data-theme="light"] .header-admin{color:#244d87;background:#ffffff80;border
 }
 @media(max-width:1100px){.header-admin{margin-left:auto}.theme-control{margin-left:0}}
 @media(max-width:640px){.header-inner{width:calc(100% - 32px);gap:6px}.header-admin{padding:0 9px;font-size:12px}.admin-label-full{display:none}.admin-label-short{display:inline}.menu-toggle{flex-shrink:0;width:34px}.language-toggle{min-width:34px;padding:0 6px}}
+
+.document-cover{display:block;width:100%;height:200px;object-fit:contain;object-position:left center;margin-bottom:20px;border-radius:8px}

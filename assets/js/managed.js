@@ -8,6 +8,10 @@
       const values=data?.overrides || {};window.BUFF_MANAGED=data;
       for(const key of allowed)if(Object.hasOwn(values,key))window.BUFF_CONTENT[key]=values[key];
       if(values.readings)Object.assign(window.BUFF_READING,values.readings);
+      if(values.media){
+        window.BUFF_MEDIA??={};
+        for(const key of ['readers','images'])Object.assign(window.BUFF_MEDIA[key]??={},values.media[key]||{});
+      }
       if(values.copy)for(const [key,value]of Object.entries(values.copy)){
         if(!/^[a-z0-9-]{1,80}$/.test(key)||typeof value!=='string')continue;
         const node=document.querySelector(`[data-edit-key="${key}"]`);if(node)node.textContent=value;

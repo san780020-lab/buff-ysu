@@ -7,3 +7,4 @@ node_modules/
 .local/
 __pycache__/
 *.log
+网站项目交接文档*.md
