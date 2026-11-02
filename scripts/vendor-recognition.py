@@ -8,7 +8,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1] / 'assets/vendor/recognition'
 PACKAGES = [
-    ('tesseract.js', '6.0.1', 'tesseract', lambda p: p in ['LICENSE'] or p.startswith('dist/') and p.endswith(('.min.js', 'LICENSE.txt'))),
+    ('tesseract.js', '6.0.1', 'tesseract', lambda p: p.lower().startswith('license') or p.startswith('dist/') and p.endswith(('.min.js', 'LICENSE.txt'))),
     ('tesseract.js-core', '6.0.0', 'core', lambda p: p == 'LICENSE' or p.endswith('.wasm.js')),
     ('pdfjs-dist', '5.4.296', 'pdf', lambda p: p == 'LICENSE' or p in ['build/pdf.mjs', 'build/pdf.worker.mjs'] or p.startswith(('cmaps/', 'standard_fonts/', 'wasm/'))),
     ('@tesseract.js-data/chi_sim', '1.0.0', 'lang', lambda p: p == '4.0.0_best_int/chi_sim.traineddata.gz'),

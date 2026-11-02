@@ -1,0 +1,2 @@
+# Retain upstream library/model bytes so manifest hashes work on Windows too.
+assets/vendor/recognition/** -text
