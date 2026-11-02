@@ -2,6 +2,7 @@
   'use strict';
   const content = window.BUFF_CONTENT;
   if (!content) return;
+  for(const poster of content.posters || [])Object.assign(poster,window.BUFF_MEDIA?.posters?.[poster.id] || {});
   let selectedSubject = 'electrical';
   let selectedFilter = 'all';
   let selectedPosterFilter = 'all';
@@ -26,7 +27,7 @@
     return link;
   }
   function safeAsset(value) {
-    return /^assets\/(?:(?:posters|documents|images|books|experiences|promotions)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
+    return /^assets\/(?:(?:posters|documents|images|books|experiences|promotions|readers)\/[a-z0-9-]+\.(?:webp|pdf|png|jpe?g)|video-covers\/[a-z0-9-]+\.svg)$/i.test(value || '') ? value : '';
   }
   function safePromotionImage(value) {
     if(safeAsset(value))return value;
@@ -34,7 +35,12 @@
   }
   function assetLink(text, path, className) {
     const link = externalLink(text, safeAsset(path), className);
-    if (/\.pdf$/i.test(path || '')) link.dataset.pdfView = path;
+    if (/\.pdf$/i.test(path || '')) {
+      link.dataset.pdfView = path; let timer;
+      const warm=()=>{if(!link.hasAttribute('download'))window.BUFF_READER?.prefetch(path);};
+      link.addEventListener('pointerenter',()=>{timer=setTimeout(warm,180);});
+      link.addEventListener('pointerleave',()=>clearTimeout(timer));link.addEventListener('focus',warm);
+    }
     return link;
   }
   function renderCourses() {
@@ -191,8 +197,9 @@
       if (posterPlaceholder(poster)) image.style.backgroundImage = `url("${posterPlaceholder(poster)}")`;
       image.addEventListener('error', () => { if(posterPlaceholder(poster)) image.src=posterPlaceholder(poster); }, {once:true});
       button.append(image, element('span', 'poster-expand', '放大查看 ↗')); button.addEventListener('click', () => openPoster(poster.id));
-      const warm = () => loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image), 'low').catch(() => {});
-      button.addEventListener('pointerenter', warm, {once:true}); button.addEventListener('focus', warm, {once:true});
+      let timer;
+      const warm=()=>{if(!navigator.connection?.saveData&&!/^(slow-)?2g$/.test(navigator.connection?.effectiveType || ''))loadPosterAsset(safeAsset(poster.screen) || safeAsset(poster.preview),'low').catch(()=>{});};
+      button.addEventListener('pointerenter',()=>{timer=setTimeout(warm,180);});button.addEventListener('pointerleave',()=>clearTimeout(timer));button.addEventListener('focus',warm);
       card.append(button, element('h4', '', poster.title), element('p', '', poster.description)); grid.append(card);
     });
     $('#poster-count').textContent = `共 ${posters.length} 张`;
@@ -209,31 +216,31 @@
   const posterDialog = $('#poster-dialog');
   const posterAssetCache = new Map();
   let posterRequest = 0;
-  function posterThumbnail(poster) { return `${safeAsset(poster.thumb)}?v=20261101-fast`; }
+  function posterThumbnail(poster) { return `${safeAsset(poster.thumb)}?v=20261102-lite`; }
   function posterPlaceholder(poster) { return /^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(poster.placeholder || '') ? poster.placeholder : ''; }
   function loadPosterAsset(src, priority = 'high') {
-    if (posterAssetCache.has(src)) { const entry=posterAssetCache.get(src); if(priority==='high') entry.image.fetchPriority='high'; return entry.promise; }
+    if (posterAssetCache.has(src)) { const entry=posterAssetCache.get(src); posterAssetCache.delete(src);posterAssetCache.set(src,entry);if(priority==='high') entry.image.fetchPriority='high'; return entry.promise; }
     const image=new Image(); image.decoding='async'; image.fetchPriority=priority;
     const promise=new Promise((resolve,reject) => {
       image.onload=async () => { try { await image.decode(); } catch {} resolve(src); };
       image.onerror=() => { posterAssetCache.delete(src); reject(new Error('Poster image unavailable')); };
     });
-    posterAssetCache.set(src,{image,promise}); image.src=src; return promise;
+    posterAssetCache.set(src,{image,promise});if(posterAssetCache.size>8)posterAssetCache.delete(posterAssetCache.keys().next().value);image.src=src;return promise;
   }
   function setPoster(index) {
-    const request=++posterRequest; let quality=0;
+    const request=++posterRequest;
     const total = content.posters.length; selectedPosterIndex = (index + total) % total;
     const poster = content.posters[selectedPosterIndex];
     $('#poster-dialog-title').textContent = poster.title;
     if(currentModule==='poster'){$('#module-title').textContent=poster.title;$('#module-subtitle').textContent=`${selectedPosterIndex+1} / ${total} · 课程海报`;if(!moduleDialog.hidden){currentPageOptions={posterID:poster.id};history.replaceState({...history.state,options:currentPageOptions},'',pageURL('poster',currentPageOptions));}}
     $('#poster-position').textContent = `${selectedPosterIndex + 1} / ${total} · 课程海报`;
-    const image = $('#poster-full-image'); image.src = posterPlaceholder(poster) || posterThumbnail(poster); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
+    const image = $('#poster-full-image'); image.dataset.quality='0'; image.src = posterPlaceholder(poster) || posterThumbnail(poster); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
     const status=$('#poster-load-status'); const retry=$('#poster-retry'); const viewer=$('.poster-viewer');
     status.textContent='正在加载清晰预览…'; retry.hidden=true; viewer.setAttribute('aria-busy','true');
-    loadPosterAsset(posterThumbnail(poster)).then(src => { if(request===posterRequest && quality<1) { quality=1; image.src=src; } }).catch(() => {});
-    loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image)).then(src => {
+    loadPosterAsset(posterThumbnail(poster)).then(src => { if(request===posterRequest && Number(image.dataset.quality)<1) { image.dataset.quality='1'; image.src=src; } }).catch(() => {});
+    loadPosterAsset(safeAsset(poster.screen) || safeAsset(poster.preview) || safeAsset(poster.image)).then(src => {
       if(request!==posterRequest) return;
-      quality=2; image.src=src; status.textContent='清晰预览已加载'; viewer.setAttribute('aria-busy','false');
+      if(Number(image.dataset.quality)<2){image.dataset.quality='2';image.src=src;} if(!viewer.classList.contains('is-zoomed'))status.textContent='清晰预览已加载'; viewer.setAttribute('aria-busy','false');
     }).catch(() => {
       if(request!==posterRequest) return;
       status.textContent='清晰图暂未加载，可重试或打开原图。'; retry.hidden=false; viewer.setAttribute('aria-busy','false');
@@ -256,6 +263,9 @@
     const zoomed = $('.poster-viewer').classList.toggle('is-zoomed');
     $('#poster-zoom').setAttribute('aria-pressed', String(zoomed));
     $('#poster-zoom').textContent = zoomed ? '完整预览' : '放大阅读';
+    if(zoomed){const request=posterRequest,poster=content.posters[selectedPosterIndex],image=$('#poster-full-image'),status=$('#poster-load-status');
+      status.textContent='正在加载高清页面…';loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image)).then(src=>{if(request!==posterRequest)return;image.dataset.quality='3';image.src=src;status.textContent='高清预览已加载';}).catch(()=>{if(request===posterRequest)status.textContent='高清暂未加载，可重试或打开原图。';});
+    }
   });
   $('.poster-close').addEventListener('click', () => posterDialog.close());
   posterDialog.addEventListener('keydown', event => {
@@ -473,7 +483,6 @@
   let currentPageOptions = {};
   let currentModule = null;
   let currentPDFPath = null;
-  let currentReaderObserver = null;
   let currentUpdateID = null;
   let homeScroll = 0;
   function restoreSections() {
@@ -494,7 +503,7 @@
       if(options.replace)history.replaceState(state,'',pageURL(key,options));else history.pushState(state,'',pageURL(key,options));
     }
     posterRequest++;
-    currentReaderObserver?.disconnect(); currentReaderObserver=null;
+    window.BUFF_READER?.reset();
     restoreSections(); moduleContent.replaceChildren();
     window.BUFF_RENDER_PAGE_NAV?.(key);
     currentModule = key; currentPageOptions={...options}; delete currentPageOptions.fromHistory; moduleDialog.dataset.module = key;
@@ -521,26 +530,8 @@
       if(info) $('#module-title').textContent=info.title;
       const viewer=element('div','module-pdf-viewer');
       const download=assetLink('下载这份 PDF ↓',currentPDFPath,'text-link'); download.setAttribute('download',currentPDFPath.split('/').pop());
-      if(info?.pageImages?.length) {
-        viewer.classList.add('experience-reader');
-        const toolbar=element('div','reader-toolbar');
-        const label=element('label','','页码 '),pages=element('select');pages.setAttribute('aria-label','选择阅读页码');
-        info.pageImages.forEach((_,index)=>{const option=element('option','',`${index+1} / ${info.pages}`);option.value=index;pages.append(option);});label.append(pages);
-        const zoom=element('button','reader-zoom','放大阅读');zoom.type='button';zoom.setAttribute('aria-pressed','false');
-        zoom.addEventListener('click',()=>{const active=viewer.classList.toggle('is-zoomed');zoom.setAttribute('aria-pressed',String(active));zoom.textContent=active?'适合宽度':'放大阅读';});
-        toolbar.append(label,zoom,download);const pageList=element('div','experience-pages'),figures=[];
-        info.pageImages.forEach((src,index)=>{
-          if(!safeAsset(src))return;const figure=element('figure','experience-page');
-          const status=element('span','reader-page-status','正在加载页面…');
-          const image=element('img');image.src=src;image.alt=`${info.title} · 第 ${index+1} 页`;image.width=1600;image.height=2263;image.loading=index?'lazy':'eager';image.decoding='async';if(!index)image.fetchPriority='high';
-          const retry=element('button','reader-page-retry','此页暂未加载，点击重试');retry.type='button';retry.hidden=true;
-          image.addEventListener('error',()=>{retry.hidden=false;status.hidden=true;});image.addEventListener('load',()=>{retry.hidden=true;status.hidden=true;});
-          retry.addEventListener('click',()=>{image.src=src+'?retry='+Date.now();});
-          figure.append(image,status,retry,element('figcaption','',`${index+1} / ${info.pages} · 原文页码 ${info.sourcePages?.[index] || index+1}`));pageList.append(figure);figures.push(figure);
-        });
-        pages.addEventListener('change',()=>figures[Number(pages.value)]?.scrollIntoView({block:'start',behavior:'instant'}));
-        if('IntersectionObserver' in window){currentReaderObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting)pages.value=String(figures.indexOf(entry.target));});},{rootMargin:'-170px 0px -55% 0px',threshold:0});figures.forEach(figure=>currentReaderObserver.observe(figure));}
-        viewer.append(toolbar,element('p','reader-note','公开阅读版保留备考正文，聊天截图不公开。原文为中文。'),pageList);
+      if(window.BUFF_READER?.has(currentPDFPath)) {
+        window.BUFF_READER.mount(viewer,info,download);
       } else {
         const frame=element('iframe'); frame.src=currentPDFPath; frame.title=info?.title || '课程 PDF 说明';
         const actions=element('div','module-pdf-actions');actions.append(element('span','','若浏览器不支持内嵌预览，可下载查看。'),download);viewer.append(frame,actions);
@@ -572,7 +563,7 @@
     const key=modules[route]?route:moduleRoutes[route];return key?{key,options:{}}:null;
   }
   function showHome(options={}) {
-    currentReaderObserver?.disconnect();currentReaderObserver=null;
+    window.BUFF_READER?.reset();
     if(!options.fromHistory){history.replaceState({...history.state,buffPage:true,key:currentModule,options:currentPageOptions,scroll:window.scrollY},'',location.href);history.pushState({buffPage:true,key:null,depth:(history.state?.depth || 0)+1,scroll:homeScroll},'',location.pathname+location.search);}
     posterRequest++; restoreSections(); moduleContent.replaceChildren(); closeMenu(); currentModule=null;currentPageOptions={};currentPDFPath=null;currentUpdateID=null;
     moduleDialog.hidden=true;$('#main').hidden=false;$('.site-footer').hidden=false;document.body.classList.remove('content-page-open');

@@ -1,6 +1,11 @@
 (() => {
   'use strict';
   const extra={
+    '200题':'200 Qs',
+    '清晰页待加载':'Preview ready; full page pending',
+    '高清阅读':'HD view','正在加载清晰页面…':'Loading readable preview…','正在加载高清页面…':'Loading high-resolution page…','高清暂未加载，点击重试':'High resolution unavailable. Retry','高清预览已加载':'High-resolution preview loaded','高清暂未加载，可重试或打开原图。':'High resolution unavailable. Retry or open the original.',
+    '轻量预览优先显示；点击“高清阅读”加载高清页，原 PDF 可下载。公开版不含聊天截图。':'Lightweight previews load first. Select high-resolution reading for detail, or download the original PDF. Chat screenshots are excluded.',
+    '轻量预览优先显示；点击“高清阅读”加载高清页，原 PDF 可下载。':'Lightweight previews load first. Select high-resolution reading for detail, or download the original PDF.',
     '正在加载页面…':'Loading page…',
     '课程介绍':'Courses','参考教材':'Reference books','当前方向：':'Current track: ','查看课程详情 →':'View course details →',
     '下载这份 PDF ↓':'Download PDF ↓','页码':'Page','选择阅读页码':'Choose page','公开阅读版保留备考正文，聊天截图不公开。原文为中文。':'The public edition includes the study essay; chat screenshots are omitted. Original document in Chinese.',
