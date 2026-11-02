@@ -1,7 +1,7 @@
 // Run security and atomic-publication checks without a live token or writes.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync('assets/js/admin.js','utf8').split("  $('#connect').addEventListener")[0]+`
-  window.TEST={validation,publish,configure:values=>{token='test-only';head='base';documentData=values;},state:()=>({head,dirty,busy})};
+  window.TEST={validation,publish,stripAssetReferences,configure:values=>{token='test-only';head='base';documentData=values;},state:()=>({head,dirty,busy})};
 })();`;
 async function fixture(mode='success'){
   const elements=new Map(),calls=[];
@@ -27,6 +27,11 @@ async function fixture(mode='success'){
   const {test,calls,elements}=await fixture();
   const valid={version:1,overrides:{analysis:{studentOrigins:{year:2027,sampleType:'机构学员样本',levels:[{label:'公办本科',percentage:100}],crossMajor:[{label:'非跨考',percentage:100}]}}}};
   test.validation(valid);
+  const path='assets/uploads/remove-test.webp',keep='assets/uploads/keep-test.webp';
+  const draft={promotions:[{id:'a',images:[path,keep],body:['保留正文']}],contact:{qrImage:path},courses:[{cover:path}],other:{images:[{src:path,alt:'待移除'},{src:keep,alt:'保留'}]}};
+  const removed=test.stripAssetReferences(draft,path);
+  assert.equal(removed.count,4);assert.equal(JSON.stringify(removed.value).includes(path),false);assert.ok(JSON.stringify(removed.value).includes(keep));assert.equal(removed.value.promotions[0].body[0],'保留正文');assert.equal(removed.value.contact.qrImage,'');assert.ok(JSON.stringify(draft).includes(path),'Original input must stay unchanged');
+
   for(const mutation of [data=>data.overrides.analysis.studentOrigins.count=12,data=>data.overrides.analysis.studentOrigins.levels[0].school='Private school',data=>data.overrides.analysis.studentOrigins.levels[0].percentage=40]){
     const bad=structuredClone(valid);mutation(bad);assert.throws(()=>test.validation(bad));
   }
@@ -39,5 +44,5 @@ async function fixture(mode='success'){
   assert.match(elements.get('#status').textContent,/发布成功/);
   assert.ok(calls.every(call=>call.url.startsWith('https://api.github.com/')));
   for(const mode of ['unauthorized','conflict']){const other=await fixture(mode);other.test.configure(valid);await other.test.publish();assert.equal(other.calls.filter(call=>call.method!=='GET').length,0);assert.match(other.elements.get('#status').textContent,mode==='unauthorized'?/所有者/:/已有其他更新/);}
-  console.log('PASS: owner rejection, concurrent-update rejection, atomic non-forced publish, percentage-only privacy, token leakage guard.');
+  console.log('PASS: owner rejection, concurrent-update rejection, atomic non-forced publish, percentage-only privacy, token leakage guard, removal across draft references.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

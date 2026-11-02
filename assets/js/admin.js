@@ -54,6 +54,25 @@
     return wrap;
   }
   function assetButton(wrap,use){const button=node('button','使用选中素材','use-asset');button.type='button';button.addEventListener('click',()=>{if(!selectedAsset){status('请先在素材区选中一张图片或一个 PDF。',true);return;}use(selectedAsset.path);});wrap.append(button);}
+  function stripAssetReferences(value,path){
+    let count=0;
+    function visit(item){
+      if(item===path){count++;return '';}
+      if(Array.isArray(item))return item.filter(entry=>{if(entry===path||entry&&typeof entry==='object'&&entry.src===path){count++;return false;}return true;}).map(visit);
+      if(item&&typeof item==='object')return Object.fromEntries(Object.entries(item).map(([key,entry])=>[key,visit(entry)]));
+      return item;
+    }
+    return {value:visit(value),count};
+  }
+  function removeAsset(asset){
+    if(busy){status('正在发布，请等待完成后再移除素材。');return;}
+    const result=stripAssetReferences(documentData.overrides,asset.path);
+    documentData.overrides=result.value;uploads.delete(asset.path);URL.revokeObjectURL(asset.url);
+    if(selectedAsset===asset)selectedAsset=null;
+    if(result.count){changed();renderEditor();}
+    $('#file-input').value='';refreshAssets();
+    status(result.count?'已移除素材，并清除草稿中对应的图片 / 文件引用。':'已移除未使用的素材。');
+  }
   function renderEditor(){if(!selected)return;$('#editor-title').textContent=selected.title;$('#editor-description').textContent=selected.description || '修改表单后可预览，确认内容再发布。';$('#module-count').textContent=`${modules.indexOf(selected)+1} / ${modules.length} 个模块`;const value=valueFor(selected);$('#editor').replaceChildren(field(value,selected.path.at(-1),update));$('#module-list').querySelectorAll('button').forEach(button=>button.setAttribute('aria-current',String(button.dataset.key===selected.key)));}
   function showModule(module){selected=module;renderEditor();}
   function renderNav(){const term=$('#module-search').value.trim();$('#module-list').replaceChildren();modules.filter(m=>m.title.includes(term)||m.description?.includes(term)).forEach(module=>{const button=node('button',module.title);button.dataset.key=module.key;button.addEventListener('click',()=>showModule(module));$('#module-list').append(button);});}
@@ -79,7 +98,16 @@
     if(typeof value==='string'&&/^assets\/.+\.(?:webp|png|jpg|jpeg)$/.test(value)){const image=node('img');image.src=uploads.get(value)?.url || value;image.alt=labels[key] || key;target.append(image);return;}
     const p=node(key==='title'?'h3':'p',String(value));if(key!=='title')p.prepend(node('small',(labels[key] || key)+'：'));target.append(p);
   }
-  function refreshAssets(){const list=$('#asset-list');list.replaceChildren();for(const asset of uploads.values()){const button=node('button',undefined,'asset');button.type='button';button.setAttribute('aria-pressed',String(selectedAsset===asset));if(asset.type==='image'){const image=node('img');image.src=asset.url;image.alt=asset.name;button.append(image);}button.append(node('span',asset.name),node('span',Math.ceil(asset.blob.size/1024)+' KB'));button.addEventListener('click',()=>{selectedAsset=asset;refreshAssets();});list.append(button);}}
+  function refreshAssets(){
+    const list=$('#asset-list');list.replaceChildren();
+    for(const asset of uploads.values()){
+      const card=node('div',undefined,'asset-card'),button=node('button',undefined,'asset');button.type='button';button.setAttribute('aria-pressed',String(selectedAsset===asset));
+      if(asset.type==='image'){const image=node('img');image.src=asset.url;image.alt=asset.name;button.append(image);}
+      button.append(node('span',asset.name),node('span',Math.ceil(asset.blob.size/1024)+' KB'));button.addEventListener('click',()=>{selectedAsset=asset;refreshAssets();});
+      const remove=node('button','移除','asset-remove');remove.type='button';remove.setAttribute('aria-label','移除素材 '+asset.name);remove.addEventListener('click',()=>removeAsset(asset));
+      card.append(button,remove);list.append(card);
+    }
+  }
   async function addFiles(files){
     for(const file of files){
       if(file.size>15*1024*1024)throw new Error('文件超过 15 MB，请先压缩或使用网盘分享链接。');

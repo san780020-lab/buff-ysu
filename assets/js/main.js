@@ -282,7 +282,7 @@
   document.addEventListener('buff:theme-menu-open',closeMenu);
   const menuButton = $('.menu-toggle');
   const navGroups = $$('[data-nav-group]');
-  const wideNav = window.matchMedia('(min-width: 901px)');
+  const wideNav = window.matchMedia('(min-width: 1101px)');
   let navCloseTimer;
   function closeMega() {
     window.clearTimeout(navCloseTimer);
