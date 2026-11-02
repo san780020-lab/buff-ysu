@@ -1,6 +1,10 @@
 (() => {
   'use strict';
   const extra={
+    '每日一题 · 抖音视频合集':'Daily practice · Douyin video collection',
+    '进入抖音合集，选择想练习的题目，观看题目与答案讲解。可以先暂停思考，再跟着视频核对解题过程。':'Open the Douyin collections, choose a question, and watch the question and solution. Pause to try it yourself, then follow the video to check your reasoning.',
+    'B 站看题目与讲解 ↗':'Watch questions & solutions on Bilibili ↗','抖音看题目与讲解 ↗':'Watch questions & solutions on Douyin ↗',
+    '查看题目与视频 ›':'View questions & videos ›','跟着视频讲解，一起想明白。':'Follow the video to understand the solution.',
     '文字阅读':'Text view','原图预览':'Original pages','内容管理':'Manage content','管理':'Admin',
     '200题':'200 Qs','2004–最新':'2004–Latest',
     '清晰页待加载':'Preview ready; full page pending',

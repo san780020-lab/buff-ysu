@@ -613,13 +613,13 @@
     const lectures=$('#daily-explanations-grid'); lectures.replaceChildren();
     questions.forEach(question => {
       const card=element('article','daily-lecture-card');
-      card.append(element('p','update-meta',`${question.date || ''} · ${question.subject || '每日一题'}`),element('h3','',question.title));
+      card.append(element('p','update-meta',[question.date, question.subject || '每日一题'].filter(Boolean).join(' · ')),element('h3','',question.title));
       const actions=element('div','update-actions'); let links=0;
-      for(const [key,name] of [['bilibili','B 站看本题讲解 ↗'],['douyin','抖音看本题讲解 ↗']]) {
+      for(const [key,name] of [['bilibili','B 站看题目与讲解 ↗'],['douyin','抖音看题目与讲解 ↗']]) {
         const url=safeURL(question[key]); if(url) { actions.append(externalLink(name,url,'button outline')); links++; }
       }
       if(!links) card.append(element('p','updates-explainer','本题讲解视频待更新。'));
-      const view=element('button','text-link','查看这道题 ›'); view.type='button'; view.addEventListener('click',()=>{openModule('daily');show(question);});
+      const view=element('button','text-link','查看题目与视频 ›'); view.type='button'; view.addEventListener('click',()=>{openModule('daily');show(question);});
       card.append(actions,view); lectures.append(card);
     });
     if(!questions.length) lectures.append(element('div','empty-state','每日一题讲解待更新，视频将按题目逐条发布。'));
@@ -627,18 +627,18 @@
     const target = $('#daily-content');
     function show(question) {
       const body = element('div','daily-question-body');
-      body.append(element('span','daily-tag', `${question.date || ''} · ${question.subject || '每日一题'}`),element('h3','',question.title));
+      body.append(element('span','daily-tag', [question.date, question.subject || '每日一题'].filter(Boolean).join(' · ')),element('h3','',question.title));
       if (question.question) body.append(element('p','',question.question));
       if (safeAsset(question.image)) { const image=element('img'); image.src=question.image; image.alt=question.title; body.append(image); }
       if (question.knowledgePoint) body.append(element('p','daily-knowledge',`知识点：${question.knowledgePoint}`));
       if (questions.length > 1) {
         const label=element('label','daily-archive','查看往期题目'); const select=element('select'); select.setAttribute('aria-label','选择每日一题');
-        questions.forEach(item=> { const option=element('option','',`${item.date} · ${item.title}`); option.value=item.id; option.selected=item.id===question.id; select.append(option); });
+        questions.forEach(item=> { const option=element('option','',[item.date, item.title].filter(Boolean).join(' · ')); option.value=item.id; option.selected=item.id===question.id; select.append(option); });
         select.addEventListener('change',()=>show(questions.find(item=>item.id===select.value))); label.append(select); body.append(label);
       }
-      const answer=element('div','daily-answer-panel'); answer.append(element('span','','题目与解析，同一个视频。'),element('h3','','跟着这期视频，一起想明白。'));
+      const answer=element('div','daily-answer-panel'); answer.append(element('span','','题目与解析，同一个视频。'),element('h3','','跟着视频讲解，一起想明白。'));
       let links=0;
-      for(const [key,name] of [['bilibili','B 站看本期题目与解析 ↗'],['douyin','抖音看本期题目与解析 ↗']]) { const url=safeURL(question[key]); if(url) { answer.append(externalLink(name,url,'text-link')); links++; } }
+      for(const [key,name] of [['bilibili','B 站看题目与讲解 ↗'],['douyin','抖音看题目与讲解 ↗']]) { const url=safeURL(question[key]); if(url) { answer.append(externalLink(name,url,'text-link')); links++; } }
       if(!links) answer.append(element('p','','本题视频讲解待更新。'));
       const profiles=element('div','profile-links'); fillProfileLinks(profiles); answer.append(profiles);
       target.replaceChildren(body,answer);

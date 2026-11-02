@@ -140,11 +140,19 @@ window.BUFF_CONTENT = {
     {title:'二本上岸 · 初试第三经验',year:2026,pages:11,size:'约 5.3 MB',url:'assets/documents/ysu-2026-initial-third.pdf',cover:'assets/images/ysu-2026-initial-third-cover.webp',pageImages:["assets/experiences/ysu-2026-initial-third-p01.webp", "assets/experiences/ysu-2026-initial-third-p02.webp", "assets/experiences/ysu-2026-initial-third-p03.webp", "assets/experiences/ysu-2026-initial-third-p04.webp", "assets/experiences/ysu-2026-initial-third-p05.webp", "assets/experiences/ysu-2026-initial-third-p06.webp", "assets/experiences/ysu-2026-initial-third-p07.webp", "assets/experiences/ysu-2026-initial-third-p08.webp", "assets/experiences/ysu-2026-initial-third-p09.webp", "assets/experiences/ysu-2026-initial-third-p10.webp", "assets/experiences/ysu-2026-initial-third-p11.webp"], sourcePages:[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 17], description:'个人备考经历与各科学习复盘。'},
     {title:'电气学硕第二 · 上岸经验',year:2026,pages:10,size:'约 6.9 MB',url:'assets/documents/ysu-2026-academic-second.pdf',cover:'assets/images/ysu-2026-academic-second-cover.webp',pageImages:["assets/experiences/ysu-2026-academic-second-p01.webp", "assets/experiences/ysu-2026-academic-second-p02.webp", "assets/experiences/ysu-2026-academic-second-p03.webp", "assets/experiences/ysu-2026-academic-second-p04.webp", "assets/experiences/ysu-2026-academic-second-p05.webp", "assets/experiences/ysu-2026-academic-second-p06.webp", "assets/experiences/ysu-2026-academic-second-p07.webp", "assets/experiences/ysu-2026-academic-second-p08.webp", "assets/experiences/ysu-2026-academic-second-p09.webp", "assets/experiences/ysu-2026-academic-second-p10.webp"], sourcePages:[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], description:'电气学硕备考与复习阶段经验分享。'}
   ],
-  // 每日一题：题目与答案解析放在同一个视频中，bilibili / douyin 填该期具体视频链接。
+  // 每日一题：题目与答案解析放在同一个视频中，也可维护明确标注的视频合集入口。
   // 不在公开仓库放入需要权限控制的独立答案。
   // 示例字段：id, date (YYYY-MM-DD), subject, title, question, image,
   // knowledgePoint, bilibili, douyin。视频字段留空时显示讲解待更新。
-  dailyQuestions: [],
+  dailyQuestions: [
+    {
+      id: 'daily-douyin-collection', date: '', subject: '每日一题',
+      title: '每日一题 · 抖音视频合集',
+      question: '进入抖音合集，选择想练习的题目，观看题目与答案讲解。可以先暂停思考，再跟着视频核对解题过程。',
+      image: '', knowledgePoint: '', bilibili: '',
+      douyin: 'https://www.douyin.com/user/MS4wLjABAAAA8dRtIFbTDSuerYLkNZ2dafkrI7MZLHi26YU_ngKYYrXdwbf4a4d_Dgttqx5bb5RF?showSubTab=compilation'
+    }
+  ],
   videos: [
     { title: '自动控制原理全程班 · 系列三', category: '自控试听', group: 'control', platform: 'bilibili', url: 'https://b23.tv/STYQFiG', cover: 'assets/video-covers/automatic-control.svg', description: 'BUFF 控制考研 · 系列三老师试听课。' },
     { title: '电路全程班 · 炼炼哥系列一', category: '电路 · 直播试听', group: 'extended', platform: 'bilibili', url: 'https://b23.tv/oQ9b9qv', cover: 'assets/video-covers/circuits-one.svg', description: '2027 BUFF 团队电路全程班系列一试听。' },
