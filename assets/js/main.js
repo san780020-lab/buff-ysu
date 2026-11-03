@@ -441,6 +441,29 @@
       actions.append(assetLink('在线阅读 ›',item.url,'text-link'),download);info.append(actions);card.append(preview,info);grid.append(card);
     });
   }
+  const promotionViewer=element('dialog','promotion-viewer');
+  promotionViewer.setAttribute('aria-label','宣传图片查看');
+  const promotionViewerHead=element('div','promotion-viewer-head'),promotionPosition=element('span'),promotionClose=element('button','','关闭 ×');
+  promotionPosition.setAttribute('aria-live','polite');promotionClose.type='button';promotionClose.addEventListener('click',()=>promotionViewer.close());
+  promotionViewerHead.append(promotionPosition,promotionClose);
+  const promotionCanvas=element('div','promotion-viewer-canvas'),promotionFullImage=element('img');promotionCanvas.append(promotionFullImage);
+  const promotionTools=element('div','promotion-viewer-tools'),promotionPrev=element('button','','← 上一张'),promotionZoom=element('button','','放大阅读'),promotionNext=element('button','','下一张 →');
+  for(const button of [promotionPrev,promotionZoom,promotionNext])button.type='button';
+  promotionZoom.setAttribute('aria-pressed','false');promotionTools.append(promotionPrev,promotionZoom,promotionNext);
+  promotionViewer.append(promotionViewerHead,promotionCanvas,promotionTools);document.body.append(promotionViewer);
+  let promotionImages=[],promotionIndex=0;
+  function showPromotionImage(index){
+    promotionIndex=(index+promotionImages.length)%promotionImages.length;
+    const image=promotionImages[promotionIndex];promotionFullImage.src=assetURL(image.path);promotionFullImage.alt=image.alt;
+    promotionPosition.textContent=`${promotionIndex+1} / ${promotionImages.length} · 宣传图片`;
+    promotionCanvas.classList.remove('is-zoomed');promotionCanvas.scrollTop=0;promotionCanvas.scrollLeft=0;
+    promotionZoom.setAttribute('aria-pressed','false');promotionZoom.textContent='放大阅读';
+    promotionPrev.disabled=promotionNext.disabled=promotionImages.length<2;
+  }
+  promotionPrev.addEventListener('click',()=>showPromotionImage(promotionIndex-1));promotionNext.addEventListener('click',()=>showPromotionImage(promotionIndex+1));
+  promotionZoom.addEventListener('click',()=>{const zoomed=promotionCanvas.classList.toggle('is-zoomed');promotionZoom.setAttribute('aria-pressed',String(zoomed));promotionZoom.textContent=zoomed?'完整预览':'放大阅读';promotionCanvas.scrollTop=0;promotionCanvas.scrollLeft=0;});
+  promotionViewer.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();showPromotionImage(promotionIndex+(event.key==='ArrowLeft'?-1:1));}});
+  promotionViewer.addEventListener('close',()=>{promotionFullImage.removeAttribute('src');promotionImages=[];});
   function renderUpdateDetail(id) {
     const isNews=(content.news || []).some(item=>item.id===id);
     const item=publishedUpdates(isNews?'news':'promotions').find(item=>item.id===id);
@@ -451,7 +474,16 @@
     const meta=element('p','update-meta',`${item.category}${isNews?' · '+item.date+' · '+item.sourceLabel:' · BUFF 团队'}`);
     article.append(meta,element('h2','',item.title),element('p','update-summary',item.summary));
     (item.body || []).forEach(text=>article.append(element('p','update-paragraph',text)));
-    if(item.images?.length){const gallery=element('div','promotion-image-gallery');item.images.forEach((source,index)=>{const path=typeof source==='string'?source:source.src;if(!safePromotionImage(path))return;const image=element('img');image.src=assetURL(uploadedImage(path)||safePromotionImage(path));image.alt=source.alt || `宣传图片 ${index+1}`;image.loading=index?'lazy':'eager';image.decoding='async';gallery.append(image);});article.append(gallery);}
+    if(item.images?.length){
+      const gallery=element('div','promotion-image-gallery');
+      const images=item.images.map((source,index)=>({path:safePromotionImage(typeof source==='string'?source:source.src),alt:source.alt || `宣传图片 ${index+1}`})).filter(image=>image.path);
+      images.forEach((source,index)=>{
+        const button=element('button','promotion-image-card');button.type='button';button.setAttribute('aria-label',`放大查看${source.alt}`);
+        const image=element('img');image.src=assetURL(uploadedImage(source.path)||source.path);image.alt=source.alt;image.loading=index?'lazy':'eager';image.decoding='async';
+        const caption=element('span','promotion-image-caption');caption.append(element('span','',`${index+1} / ${images.length}`),element('span','','放大查看 ↗'));button.append(image,caption);
+        button.addEventListener('click',()=>{promotionImages=images;showPromotionImage(index);promotionViewer.showModal();});gallery.append(button);
+      });article.append(gallery);
+    }
     const actions=element('div','update-actions');
     if(item.module) { const button=element('button','button primary',item.actionLabel || '进一步了解'); button.type='button'; button.dataset.moduleOpen=item.module; actions.append(button); }
     if(safeURL(item.url)) actions.append(externalLink('查看官网原公告 ↗',safeURL(item.url),'button outline'));
