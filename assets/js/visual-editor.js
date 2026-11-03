@@ -79,7 +79,7 @@
   function mount(){
     const doc=frame.contentDocument;if(!doc||!doc.defaultView?.BUFF_VISUAL_PREVIEW){$('#visual-loading').hidden=true;return;}
     observer?.disconnect();
-    const stylesheet=doc.createElement('link');stylesheet.rel='stylesheet';stylesheet.href='assets/css/visual-target.css?v=20261103-editor1';doc.head.append(stylesheet);
+    const stylesheet=doc.createElement('link');stylesheet.rel='stylesheet';stylesheet.href='assets/css/visual-target.css?v=20261103-editor2';doc.head.append(stylesheet);
     decorate(doc);let pending=false;
     observer=new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;decorate(doc);});});observer.observe(doc.body,{childList:true,subtree:true});
     doc.addEventListener('click',event=>{
