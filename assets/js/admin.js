@@ -64,7 +64,13 @@
       else if(typeof value==='boolean'){input=node('input');input.type='checkbox';input.checked=value;}
       else if(typeof value==='number'){input=node('input');input.type='number';input.min='0';if(key==='percentage')input.max='100';input.value=value;}
       else{input=node(['description','subtitle','audience','question','intro','teachers','offer','scope','levelDefinition','crossDefinition'].includes(key)||(value || '').length>80?'textarea':'input');input.value=value??'';}
-      input.setAttribute('aria-label',labels[key] || key || '内容');input.addEventListener('input',()=>set(typeof value==='boolean'?input.checked:typeof value==='number'?Number(input.value):input.value));wrap.append(input);
+      input.setAttribute('aria-label',labels[key] || key || '内容');
+      if(['module','actionLabel'].includes(key)){
+        const unlock=node('input'),hint=node('small','勾选后可修改');unlock.type='checkbox';unlock.checked=false;unlock.setAttribute('aria-label','允许编辑'+labels[key]);
+        label.classList.add('field-unlock');label.replaceChildren(unlock,node('span',labels[key]),hint);input.disabled=true;
+        unlock.addEventListener('change',()=>{input.disabled=!unlock.checked;hint.textContent=unlock.checked?'已解锁':'勾选后可修改';});
+      }
+      input.addEventListener('input',()=>{if(input.disabled)return;set(typeof value==='boolean'?input.checked:typeof value==='number'?Number(input.value):input.value);});wrap.append(input);
       if(['image','cover','qrImage'].includes(key)&&value){const image=node('img',undefined,'single-preview');image.src=uploads.get(value)?.url||value;image.alt=labels[key]||key;wrap.prepend(image);}
       if(['image','images','cover','thumb','preview','screen','url','document','qrImage'].includes(key))assetButton(wrap,path=>{input.value=path;set(path);if(selectedAsset&&(key==='url'||key==='image'))attachAsset(selectedAsset);renderEditor();});
     }
