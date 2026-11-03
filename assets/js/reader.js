@@ -114,7 +114,7 @@
     function jump(){current=Number(select.value);prioritize(current);ensure(current,zoomed?2:1,-1);alignPage(current);if(canPrefetch())ensure(current+1,1,3);}
     select.addEventListener('change',jump);
     zoom.addEventListener('click',()=>{
-      current=Number(select.value);zoomed=!zoomed;viewer.classList.toggle('is-zoomed',zoomed);zoom.setAttribute('aria-pressed',String(zoomed));zoom.textContent=zoomed?'适合宽度':'高清阅读';
+      current=Number(select.value);zoomed=!zoomed;viewer.classList.toggle('is-zoomed',zoomed);zoom.setAttribute('aria-pressed',String(zoomed));zoom.textContent=zoomed?'完整预览':'高清阅读';
       prioritize(current);
       ensure(current,zoomed?2:1,-1);alignPage(current);
       if(!zoomed)states.forEach(state=>{if(state.shown)state.status.hidden=true;});

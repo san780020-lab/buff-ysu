@@ -11,3 +11,54 @@ html,body{height:100%;overflow:hidden}body{padding:0;display:grid;grid-template-
 .visual-panel-topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;height:49px;padding:8px 16px;background:#fff;border-bottom:1px solid #e0e7f0}.visual-panel-topbar>span{font-size:12px;color:#60718b}#close-editor-panel{height:32px;padding:5px 10px;font-size:13px;line-height:20px;white-space:nowrap}.visual-admin .editor-heading{top:49px}
 
 .field>.field-unlock{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.field-unlock input[type=checkbox]{width:17px;height:17px;margin:0;flex:none;accent-color:#216bca}.field-unlock small{font-size:11px;font-weight:400;color:#76859b}.field>input:disabled,.field>select:disabled,.field>textarea:disabled{background:#f0f3f7;color:#77869b;border-color:#dce3ec;cursor:not-allowed;opacity:1}
+
+/* Compact editing chrome leaves more space for the website and the form. */
+.visual-admin{--editor-width:420px;font-size:14px}
+.visual-admin .admin-header{min-height:48px;padding:7px 16px;gap:10px}
+.visual-admin .admin-header strong{font-size:15px}
+.visual-admin .visual-header-actions button{padding:7px 9px;font-size:12px}
+.visual-admin #status{min-height:30px;padding:6px 16px;font-size:11px;line-height:1.6}
+.visual-admin .publish-bar{padding:8px 16px;gap:7px}
+.visual-admin .publish-bar button,.visual-admin .publish-bar label{padding:7px 9px}
+.visual-admin.visual-panel-open .admin-layout{width:min(var(--editor-width),100%)}
+.visual-admin .editor-panel{padding:16px}
+.visual-admin .visual-panel-topbar{height:40px;padding:5px 14px}
+.visual-admin #close-editor-panel{height:30px;padding:4px 9px;font-size:12px}
+.visual-admin .editor-heading{top:40px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:8px 0;margin-top:-8px}
+.visual-admin .editor-heading h2{font-size:17px;line-height:1.45;margin:4px 0;overflow-wrap:anywhere}
+.visual-admin .editor-heading p{font-size:11px;line-height:1.6;margin:4px 0}
+.visual-admin .visual-panel-actions{flex-direction:column;align-items:stretch;gap:5px}
+.visual-admin #finish-editing{padding:7px 9px;font-size:11px}
+.visual-admin #preview{padding:6px;font-size:10px}
+.visual-admin .field{margin:12px 0}
+.visual-admin .field>label{font-size:12px;margin-bottom:5px}
+.visual-admin input,.visual-admin select,.visual-admin textarea{padding:8px;font-size:14px;border-radius:7px}
+.visual-admin input[type=checkbox]{padding:0}
+.visual-admin textarea{min-height:86px;line-height:1.6}
+.visual-admin .object-group{padding:12px;margin:12px 0}
+.visual-admin .object-group>summary{font-size:13px}
+.visual-admin .advanced-fields,.visual-admin .object-section{margin:14px 0;padding-top:10px}
+.visual-admin .upload-zone{margin:14px 0;padding:12px}
+.visual-admin .image-field{max-width:112px;gap:6px}
+.visual-admin .image-field img{width:108px;height:90px}
+.visual-admin .image-fields{gap:9px}
+.visual-admin .single-preview{max-height:120px;max-width:150px}
+.visual-admin .row-actions{gap:6px}
+.visual-admin .row-actions button{font-size:11px;padding:5px 8px}
+.visual-admin.visual-picking .admin-layout aside{padding:16px}
+.visual-admin.visual-picking #module-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.visual-admin #module-list button{font-size:12px;padding:8px;overflow-wrap:anywhere}
+@media(min-width:1100px){.visual-admin.visual-panel-open #visual-workspace{margin-right:var(--editor-width)}}
+@media(max-width:760px){
+ .visual-admin .admin-header{padding:7px 10px;gap:7px;min-height:44px}
+ .visual-admin .admin-header strong{font-size:13px}
+ .visual-admin .visual-header-actions{gap:4px}
+ .visual-admin .visual-header-actions button{padding:6px 7px;font-size:11px;min-height:32px}
+ .visual-admin #status{padding:5px 10px;min-height:28px;font-size:10px}
+ .visual-admin .publish-bar{padding:7px 10px;gap:5px}
+ .visual-admin .editor-panel{padding:14px}
+ .visual-admin .editor-heading{gap:10px}
+ .visual-admin .editor-heading h2{font-size:16px}
+ .visual-admin .admin-layout{width:100%}
+ .visual-admin input,.visual-admin select,.visual-admin textarea{font-size:16px}
+}
