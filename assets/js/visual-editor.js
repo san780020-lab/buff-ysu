@@ -107,7 +107,7 @@
     $('#open-auth').addEventListener('click',()=>{$('#auth-card').hidden=false;$('#token').focus();});
     $('#close-auth').addEventListener('click',()=>{$('#auth-card').hidden=true;});
     $('#all-modules').addEventListener('click',()=>{if(api.working)return;if(document.body.classList.contains('visual-picking')){done();return;}setPanel(true);document.body.classList.add('visual-picking');$('#module-search').focus();});
-    $('#close-module-picker').addEventListener('click',done);
+    $('#close-editor-panel').addEventListener('click',done);
     document.addEventListener('keydown',event=>{if(event.key==='Escape'){if(!$('#auth-card').hidden)$('#auth-card').hidden=true;else done();}});
     // Always preview the current draft before publication, including edits in a still-open panel.
     $('#publish').addEventListener('click',()=>{if(!api.working)done();},true);
