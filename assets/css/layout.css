@@ -179,6 +179,13 @@ html[data-theme="light"] .class-service-note strong { color:#253c60; }
 .chart-method { margin-top:14px; padding-top:12px; line-height:1.7; }
 .history-chart { padding:20px; border-radius:16px; }
 .history-chart svg { max-height:320px; }
+.history-chart { --history-academic:#69aaff; --history-professional:#ffb454; }
+html[data-theme="light"] .history-chart { --history-academic:#2166c4; --history-professional:#cf6910; }
+.history-legend { color:var(--ink); font-size:15px; font-weight:650; gap:24px; margin:0 0 16px; }
+.history-legend>span:before { width:12px; height:12px; flex:none; background:var(--history-academic); }
+.history-legend .professional-key:before { background:var(--history-professional); }
+.history-academic { fill:var(--history-academic); }
+.history-professional { fill:var(--history-professional); }
 .history-detail-heading { margin:24px 0 16px; }
 .history-detail-heading h3 { font-size:21px; }
 .history-composition-card { padding:18px; }

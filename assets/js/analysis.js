@@ -45,7 +45,7 @@
     data.years.forEach((year,index)=>{
       const center=125+index*155;
       [['academic',-39],['professional',5]].forEach(([key,dx])=>{
-        const value=year[key].total;const bar=svgNode('rect',{x:center+dx,y:yScale(value),width:34,height:bottom-yScale(value),rx:5,fill:key==='academic'?colors[0]:colors[1]});
+        const value=year[key].total;const bar=svgNode('rect',{x:center+dx,y:yScale(value),width:34,height:bottom-yScale(value),rx:5,class:`history-${key}`});
         bar.append(svgNode('title',{},`${year.year} 年${key==='academic'?'电气学硕':'电气专硕'}：${value} 人`));
         svg.append(bar,svgNode('text',{x:center+dx+17,y:yScale(value)-10,'text-anchor':'middle',class:'history-value'},value));
       });
