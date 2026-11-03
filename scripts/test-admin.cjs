@@ -21,10 +21,10 @@ async function fixture(mode='success'){
     else throw new Error('Unexpected request '+url);
     return {ok:true,json:async()=>value};
   }};
-  vm.createContext(context);await vm.runInContext(source,context);return {test:context.window.TEST,calls,elements};
+  vm.createContext(context);await vm.runInContext(source,context);return {test:context.window.TEST,editor:context.window.BUFF_EDITOR,calls,elements};
 }
 (async()=>{
-  const {test,calls,elements}=await fixture();
+  const {test,editor,calls,elements}=await fixture();
   const valid={version:1,overrides:{analysis:{studentOrigins:{year:2027,sampleType:'机构学员样本',levels:[{label:'公办本科',percentage:100}],crossMajor:[{label:'非跨考',percentage:100}]}}}};
   test.validation(valid);
   test.validation({version:1,overrides:{site:{examYear:2028,pastPaperRange:'2004–最新',copyrightYear:'自动'},admissions:{year:2028}}});
@@ -46,7 +46,12 @@ async function fixture(mode='success'){
   test.validation(mediaDraft);
   for(const mutation of [d=>d.overrides.media.readers[pdf].pages[0].full='https://example.com/private.webp',d=>d.overrides.media.readers[pdf].pages=[],d=>d.overrides.media.readers[pdf].cover='../outside.webp',d=>d.overrides.media.readers[pdf].pages[0].width=Infinity]){const bad=structuredClone(mediaDraft);mutation(bad);assert.throws(()=>test.validation(bad));}
   const pruned=structuredClone(mediaDraft);pruned.overrides.documents=[];test.configure(pruned);test.pruneMedia();assert.equal(Object.keys(pruned.overrides.media.readers).length,0,'Removed documents must not keep orphan preview files in future publications');
-  test.configure(valid);await test.publish();
+  test.configure(valid);
+  const previewSnapshot=editor.snapshot();
+  assert.equal(Object.keys(previewSnapshot).sort().join(','),'assets,data');
+  assert.equal(JSON.stringify(previewSnapshot).includes('test-only'),false,'Preview frames must never receive the token');
+  assert.equal(editor.publish,undefined,'Preview API must not expose the GitHub publisher');
+  await test.publish();
   const tree=calls.find(call=>call.url.endsWith('/git/trees')).body;
   assert.equal(tree.base_tree,'tree-base');assert.equal(tree.tree.length,3);assert.equal(tree.tree[0].path,'assets/data/managed-content.json');
   const ref=calls.find(call=>call.method==='PATCH').body;assert.equal(ref.force,false);assert.equal(ref.sha,'commit-new');

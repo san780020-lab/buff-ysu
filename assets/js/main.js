@@ -13,6 +13,8 @@
   let selectedMaterialStage = 'initial';
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const assetURL=path=>window.BUFF_ASSET_URL?.(path)??path;
+  function editItem(target,key,item){if(window.BUFF_VISUAL_PREVIEW){target.dataset.visualModule=key;target.dataset.visualIndex=(content[key]||[]).indexOf(item);}return target;}
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -26,7 +28,7 @@
   }
   function externalLink(text, url, className) {
     const link = element('a', className, text);
-    link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    link.href = assetURL(url); link.target = '_blank'; link.rel = 'noopener noreferrer';
     return link;
   }
   function safeAsset(value) {
@@ -53,6 +55,7 @@
     const visible = content.courses.filter(course => (selectedFilter === 'all' || course.stage === selectedFilter) && (selectedSubject === 'all' || !course.subject || course.subject === 'all' || course.subject === selectedSubject) && !(selectedFilter === 'all' && course.status === '待更新'));
     for (const course of visible) {
       const card = element('article', 'course-card');
+      editItem(card,'courses',course);
       const top = element('div', 'course-top');
       top.append(element('span', 'course-stage', course.stageLabel), element('span', 'course-number', course.number));
       const title = element('h3', '', course.title);
@@ -84,10 +87,11 @@
       const cards = element('div','video-card-grid');
       videos.forEach((video, index) => {
       const card = element('article', 'video-card');
+      editItem(card,'videos',video);
       const url = safeURL(video.url);
       const thumbnail = element('div', `video-thumbnail video-theme-${index % 3}`);
       const cover = safeAsset(video.cover);
-      if (cover) { const image = element('img','video-cover'); image.src=cover; image.alt=`${video.title}课程封面`; image.width=960; image.height=540; image.loading='lazy'; thumbnail.append(image); }
+      if (cover) { const image = element('img','video-cover'); image.src=assetURL(cover); image.alt=`${video.title}课程封面`; image.width=960; image.height=540; image.loading='lazy'; thumbnail.append(image); }
       else { const preview = element('div', 'video-preview-lines'); preview.setAttribute('aria-hidden', 'true'); thumbnail.append(preview); }
       const play = element('span', 'video-play', '▶'); play.setAttribute('aria-hidden', 'true');
       thumbnail.append(play, element('span', 'video-status', url ? (video.platform==='douyin'?'前往抖音观看 ↗':'前往 B 站观看 ↗') : '视频待上线'));
@@ -124,6 +128,7 @@
   }
   const dialog = $('#course-dialog');
   function renderCourseDetails(course) {
+    editItem($('#course-detail-content'),'courses',course);
     $('#dialog-eyebrow').textContent = `${content.subjects[selectedSubject].label} / ${course.stageLabel}`;
     $('#dialog-title').textContent = course.title;
     $('#dialog-description').textContent = course.audience;
@@ -180,7 +185,8 @@
     (content.documents || []).filter(document => (document.stage || 'initial') === selectedMaterialStage).forEach(document => {
       if (!safeAsset(document.url)) return;
       const card = element('article', 'document-card');
-      if(safeAsset(document.cover)){const cover=element('img','document-cover');cover.src=safeAsset(document.cover);cover.alt=document.title+'封面';cover.loading='lazy';cover.decoding='async';card.append(cover);}
+      editItem(card,'documents',document);
+      if(safeAsset(document.cover)){const cover=element('img','document-cover');cover.src=assetURL(safeAsset(document.cover));cover.alt=document.title+'封面';cover.loading='lazy';cover.decoding='async';card.append(cover);}
       const body = element('div', 'document-card-body');
       body.append(element('span', 'document-label', document.pages?`PDF · ${document.pages} 页`:'PDF · 资料'), element('h3', '', document.title), element('p', '', document.description), element('small', 'document-source', [document.sourcePages,document.size].filter(Boolean).join(' · ')));
       const actions = element('div', 'document-actions');
@@ -197,10 +203,11 @@
     posters.forEach(poster => {
       if (!safeAsset(poster.image) || !safeAsset(poster.thumb)) return;
       const card = element('article', 'poster-card');
+      editItem(card,'posters',poster);
       const button = element('button', 'poster-preview'); button.type = 'button'; button.setAttribute('aria-label', `放大查看${poster.title}`);
-      const image = element('img'); image.src = posterThumbnail(poster); image.alt = poster.title; image.width = poster.width; image.height = poster.height; image.loading = 'lazy'; image.decoding = 'async';
+      const image = element('img'); image.src=assetURL(posterThumbnail(poster)); image.alt = poster.title; image.width = poster.width; image.height = poster.height; image.loading = 'lazy'; image.decoding = 'async';
       if (posterPlaceholder(poster)) image.style.backgroundImage = `url("${posterPlaceholder(poster)}")`;
-      image.addEventListener('error', () => { if(posterPlaceholder(poster)) image.src=posterPlaceholder(poster); }, {once:true});
+      image.addEventListener('error', () => { if(posterPlaceholder(poster)) image.src=assetURL(posterPlaceholder(poster)); }, {once:true});
       button.append(image, element('span', 'poster-expand', '放大查看 ↗')); button.addEventListener('click', () => openPoster(poster.id));
       let timer;
       const warm=()=>{if(!navigator.connection?.saveData&&!/^(slow-)?2g$/.test(navigator.connection?.effectiveType || ''))loadPosterAsset(safeAsset(poster.screen) || safeAsset(poster.preview),'low').catch(()=>{});};
@@ -230,7 +237,7 @@
       image.onload=async () => { try { await image.decode(); } catch {} resolve(src); };
       image.onerror=() => { posterAssetCache.delete(src); reject(new Error('Poster image unavailable')); };
     });
-    posterAssetCache.set(src,{image,promise});if(posterAssetCache.size>8)posterAssetCache.delete(posterAssetCache.keys().next().value);image.src=src;return promise;
+    posterAssetCache.set(src,{image,promise});if(posterAssetCache.size>8)posterAssetCache.delete(posterAssetCache.keys().next().value);image.src=assetURL(src);return promise;
   }
   function setPoster(index) {
     const request=++posterRequest;
@@ -239,18 +246,18 @@
     $('#poster-dialog-title').textContent = poster.title;
     if(currentModule==='poster'){$('#module-title').textContent=poster.title;$('#module-subtitle').textContent=`${selectedPosterIndex+1} / ${total} · 课程海报`;if(!moduleDialog.hidden){currentPageOptions={posterID:poster.id};history.replaceState({...history.state,options:currentPageOptions},'',pageURL('poster',currentPageOptions));}}
     $('#poster-position').textContent = `${selectedPosterIndex + 1} / ${total} · 课程海报`;
-    const image = $('#poster-full-image'); image.dataset.quality='0'; image.src = posterPlaceholder(poster) || posterThumbnail(poster); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
+    const image = $('#poster-full-image'); image.dataset.quality='0'; image.src=assetURL(posterPlaceholder(poster) || posterThumbnail(poster)); image.alt = `${poster.title}：${poster.description}`; image.width = poster.width; image.height = poster.height;
     const status=$('#poster-load-status'); const retry=$('#poster-retry'); const viewer=$('.poster-viewer');
     status.textContent='正在加载清晰预览…'; retry.hidden=true; viewer.setAttribute('aria-busy','true');
-    loadPosterAsset(posterThumbnail(poster)).then(src => { if(request===posterRequest && Number(image.dataset.quality)<1) { image.dataset.quality='1'; image.src=src; } }).catch(() => {});
+    loadPosterAsset(posterThumbnail(poster)).then(src => { if(request===posterRequest && Number(image.dataset.quality)<1) { image.dataset.quality='1'; image.src=assetURL(src); } }).catch(() => {});
     loadPosterAsset(safeAsset(poster.screen) || safeAsset(poster.preview) || safeAsset(poster.image)).then(src => {
       if(request!==posterRequest) return;
-      if(Number(image.dataset.quality)<2){image.dataset.quality='2';image.src=src;} if(!viewer.classList.contains('is-zoomed'))status.textContent='清晰预览已加载'; viewer.setAttribute('aria-busy','false');
+      if(Number(image.dataset.quality)<2){image.dataset.quality='2';image.src=assetURL(src);} if(!viewer.classList.contains('is-zoomed'))status.textContent='清晰预览已加载'; viewer.setAttribute('aria-busy','false');
     }).catch(() => {
       if(request!==posterRequest) return;
       status.textContent='清晰图暂未加载，可重试或打开原图。'; retry.hidden=false; viewer.setAttribute('aria-busy','false');
     });
-    $('#poster-original').href = safeAsset(poster.image);
+    $('#poster-original').href = assetURL(safeAsset(poster.image));
     $('.poster-viewer').classList.remove('is-zoomed');
     $('.poster-viewer').scrollTop = 0; $('.poster-viewer').scrollLeft = 0;
     $('#poster-zoom').setAttribute('aria-pressed', 'false'); $('#poster-zoom').textContent = '放大阅读';
@@ -269,7 +276,7 @@
     $('#poster-zoom').setAttribute('aria-pressed', String(zoomed));
     $('#poster-zoom').textContent = zoomed ? '完整预览' : '放大阅读';
     if(zoomed){const request=posterRequest,poster=content.posters[selectedPosterIndex],image=$('#poster-full-image'),status=$('#poster-load-status');
-      status.textContent='正在加载高清页面…';loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image)).then(src=>{if(request!==posterRequest)return;image.dataset.quality='3';image.src=src;status.textContent='高清预览已加载';}).catch(()=>{if(request===posterRequest)status.textContent='高清暂未加载，可重试或打开原图。';});
+      status.textContent='正在加载高清页面…';loadPosterAsset(safeAsset(poster.preview) || safeAsset(poster.image)).then(src=>{if(request!==posterRequest)return;image.dataset.quality='3';image.src=assetURL(src);status.textContent='高清预览已加载';}).catch(()=>{if(request===posterRequest)status.textContent='高清暂未加载，可重试或打开原图。';});
     }
   });
   $('.poster-close').addEventListener('click', () => posterDialog.close());
@@ -360,15 +367,16 @@
     if (contact.publicAccount) nodes.push(element('p', 'contact-account', `微信公众号：${contact.publicAccount}`));
     if (contact.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) { const email = element('a', 'contact-detail', `邮箱：${contact.email}`); email.href = `mailto:${contact.email}`; nodes.push(email); }
     for (const [key, label] of [['bilibili', '前往 B 站主页 ↗'], ['douyin', '前往抖音主页 ↗']]) { const url = safeURL(contact[key]); if (url) nodes.push(externalLink(label, url, 'contact-platform')); }
-    if (contact.qrImage && /^(?:\.\/)?assets\/images\/[\w./-]+\.(?:png|jpe?g|webp)$/i.test(contact.qrImage) && !contact.qrImage.includes('..')) { const img = element('img', 'contact-qr'); img.src = contact.qrImage; img.alt = 'BUFF 机构咨询二维码'; img.width = 128; img.height = 128; nodes.push(img); }
+    if (safeAsset(contact.qrImage) && /\.(png|jpe?g|webp)$/i.test(contact.qrImage)) { const img = element('img', 'contact-qr'); img.src=assetURL(contact.qrImage); img.alt = 'BUFF 机构咨询二维码'; img.width = 128; img.height = 128; nodes.push(img); }
     if (nodes.length) target.replaceChildren(...nodes);
   }
   function renderTextbooks() {
     const grid = $('#textbook-grid'); grid.replaceChildren();
     (content.textbooks || []).forEach(book => {
       const card = element('article','textbook-card');
+      editItem(card,'textbooks',book);
       const visual = element('div','reference-cover');
-      if (safeAsset(book.image)) { const image=element('img'); image.src=book.image; image.alt=`${book.title}，${book.edition}教材封面`; image.width=190; image.height=250; if(['drive','modern'].includes(book.coverStyle)) image.dataset.coverStyle=book.coverStyle; visual.append(image); }
+      if (safeAsset(book.image)) { const image=element('img'); image.src=assetURL(book.image); image.alt=`${book.title}，${book.edition}教材封面`; image.width=190; image.height=250; if(['drive','modern'].includes(book.coverStyle)) image.dataset.coverStyle=book.coverStyle; visual.append(image); }
       else { const placeholder=element('div','reference-cover-placeholder'); placeholder.append(element('strong','',book.title),element('span','','封面待补充')); visual.append(placeholder); }
       const text=element('div','reference-info');
       text.append(element('span','reference-tag',book.tag),element('h3','',book.title),element('p','reference-meta',`${book.edition} · ${book.author}`),element('p','reference-meta',book.publisher),element('p','reference-scope',book.scope));
@@ -400,6 +408,7 @@
   }
   function updateButton(item, compact=false) {
     const button=element('button',compact?'update-list-item':'update-card'); button.type='button'; button.dataset.updateId=item.id;
+    editItem(button,(content.news||[]).includes(item)?'news':'promotions',item);
     const meta=element('span','update-meta');
     meta.append(element('span','',item.pinned?'置顶 · '+item.category:item.category));
     if(item.sourceLabel){const date=element('time','',item.date);date.dateTime=item.date;meta.append(date);}
@@ -413,7 +422,8 @@
     const featured=promotions.find(item=>item.featured) || promotions[0];
     $('#home-promotion').replaceChildren(...(featured?[updateButton(featured)]:[element('p','empty-state','机构动态待更新。')]));
     const banner=$('#home-promotion-banner'); banner.replaceChildren();
-    if(featured){const text=element('div','promo-banner-copy');if(featured.images?.length && safePromotionImage(typeof featured.images[0]==='string'?featured.images[0]:featured.images[0].src)){const source=featured.images[0],image=element('img','promo-banner-image');image.src=uploadedImage(typeof source==='string'?source:source.src,'thumb')||(typeof source==='string'?source:source.src);image.alt=source.alt || '宣传图片';image.width=90;image.height=90;banner.append(image);}text.append(element('span','','BUFF 每日宣传'),element('strong','',featured.title));const action=element('button','button outline','展开查看 ›');action.type='button';action.dataset.updateId=featured.id;banner.append(text,action);}
+    if(featured)editItem(banner,'promotions',featured);
+    if(featured){const text=element('div','promo-banner-copy');if(featured.images?.length && safePromotionImage(typeof featured.images[0]==='string'?featured.images[0]:featured.images[0].src)){const source=featured.images[0],image=element('img','promo-banner-image');image.src=assetURL(uploadedImage(typeof source==='string'?source:source.src,'thumb')||(typeof source==='string'?source:source.src));image.alt=source.alt || '宣传图片';image.width=90;image.height=90;banner.append(image);}text.append(element('span','','BUFF 每日宣传'),element('strong','',featured.title));const action=element('button','button outline','展开查看 ›');action.type='button';action.dataset.updateId=featured.id;banner.append(text,action);}
     $('#news-list').replaceChildren(...news.map(item=>updateButton(item)));
     $('#promotion-list').replaceChildren(...promotions.map(item=>updateButton(item)));
     if(!news.length) $('#news-list').append(element('p','empty-state','暂未发布院校消息。'));
@@ -422,8 +432,9 @@
     const grid=$('#experience-grid'); grid.replaceChildren();
     (content.experiences || []).forEach(item=> {
       const card=element('article','experience-card');
+      editItem(card,'experiences',item);
       const preview=assetLink('',item.url,'experience-preview'); preview.setAttribute('aria-label',`阅读${item.title}`);
-      const image=element('img'); image.src=uploadedImage(item.cover,'thumb'); image.alt=`${item.title}首页`; image.width=420; image.height=594; image.loading='lazy'; preview.append(image);
+      const image=element('img'); image.src=assetURL(uploadedImage(item.cover,'thumb')); image.alt=`${item.title}首页`; image.width=420; image.height=594; image.loading='lazy'; preview.append(image);
       const info=element('div','experience-info');
       info.append(element('p','update-meta',`${item.year} 届 · ${item.pages} 页 · ${item.size}`),element('h3','',item.title),element('p','',item.description));
       const actions=element('div','update-actions');const download=assetLink('下载 PDF ↓',item.url,'text-link'); download.download=item.url.split('/').pop();
@@ -436,10 +447,11 @@
     if(!item) { moduleContent.append(element('p','empty-state','这条消息尚未发布。')); return; }
     $('#module-title').textContent=isNews?'院校消息':'BUFF 每日宣传';
     const article=element('article','update-detail container');
+    editItem(article,isNews?'news':'promotions',item);
     const meta=element('p','update-meta',`${item.category}${isNews?' · '+item.date+' · '+item.sourceLabel:' · BUFF 团队'}`);
     article.append(meta,element('h2','',item.title),element('p','update-summary',item.summary));
     (item.body || []).forEach(text=>article.append(element('p','update-paragraph',text)));
-    if(item.images?.length){const gallery=element('div','promotion-image-gallery');item.images.forEach((source,index)=>{const path=typeof source==='string'?source:source.src;if(!safePromotionImage(path))return;const image=element('img');image.src=uploadedImage(path)||safePromotionImage(path);image.alt=source.alt || `宣传图片 ${index+1}`;image.loading=index?'lazy':'eager';image.decoding='async';gallery.append(image);});article.append(gallery);}
+    if(item.images?.length){const gallery=element('div','promotion-image-gallery');item.images.forEach((source,index)=>{const path=typeof source==='string'?source:source.src;if(!safePromotionImage(path))return;const image=element('img');image.src=assetURL(uploadedImage(path)||safePromotionImage(path));image.alt=source.alt || `宣传图片 ${index+1}`;image.loading=index?'lazy':'eager';image.decoding='async';gallery.append(image);});article.append(gallery);}
     const actions=element('div','update-actions');
     if(item.module) { const button=element('button','button primary',item.actionLabel || '进一步了解'); button.type='button'; button.dataset.moduleOpen=item.module; actions.append(button); }
     if(safeURL(item.url)) actions.append(externalLink('查看官网原公告 ↗',safeURL(item.url),'button outline'));
@@ -527,6 +539,7 @@
       const info=[...(content.documents || []),...(content.experiences || [])].find(item=>item.url===currentPDFPath);
       if(info) $('#module-title').textContent=info.title;
       const viewer=element('div','module-pdf-viewer');
+      editItem(viewer,(content.documents||[]).includes(info)?'documents':'experiences',info);
       const download=assetLink('下载这份 PDF ↓',currentPDFPath,'text-link'); download.setAttribute('download',currentPDFPath.split('/').pop());
       if(window.BUFF_READER?.has(currentPDFPath)) {
         window.BUFF_READER.mount(viewer,info,download);
@@ -534,7 +547,7 @@
         viewer.classList.add('experience-reader');
         const article=element('article','reading-article');article.append(element('p','',info?.description || '资料说明'));
         (info?.body || []).forEach(text=>article.append(element('p','',text)));
-        (info?.images || []).forEach(path=>{if(safeAsset(path)){const image=element('img');image.src=uploadedImage(path);image.alt=info.title;image.loading='lazy';article.append(image);}});
+        (info?.images || []).forEach(path=>{if(safeAsset(path)){const image=element('img');image.src=assetURL(uploadedImage(path));image.alt=info.title;image.loading='lazy';article.append(image);}});
         article.append(download);viewer.append(article);
       }
       moduleContent.append(viewer);
@@ -609,6 +622,7 @@
     const lectures=$('#daily-explanations-grid'); lectures.replaceChildren();
     questions.forEach(question => {
       const card=element('article','daily-lecture-card');
+      editItem(card,'dailyQuestions',question);
       card.append(element('p','update-meta',[question.date, question.subject || '每日一题'].filter(Boolean).join(' · ')),element('h3','',question.title));
       const actions=element('div','update-actions'); let links=0;
       for(const [key,name] of [['bilibili','B 站看题目与讲解 ↗'],['douyin','抖音看题目与讲解 ↗']]) {
@@ -623,9 +637,10 @@
     const target = $('#daily-content');
     function show(question) {
       const body = element('div','daily-question-body');
+      editItem(body,'dailyQuestions',question);
       body.append(element('span','daily-tag', [question.date, question.subject || '每日一题'].filter(Boolean).join(' · ')),element('h3','',question.title));
       if (question.question) body.append(element('p','',question.question));
-      if (safeAsset(question.image)) { const image=element('img'); image.src=uploadedImage(question.image); image.alt=question.title; body.append(image); }
+      if (safeAsset(question.image)) { const image=element('img'); image.src=assetURL(uploadedImage(question.image)); image.alt=question.title; body.append(image); }
       if (question.knowledgePoint) body.append(element('p','daily-knowledge',`知识点：${question.knowledgePoint}`));
       if (questions.length > 1) {
         const label=element('label','daily-archive','查看往期题目'); const select=element('select'); select.setAttribute('aria-label','选择每日一题');

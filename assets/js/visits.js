@@ -2,6 +2,7 @@
   'use strict';
   const display=document.getElementById('busuanzi_value_site_pv');
   if(!display)return;
+  if(new URLSearchParams(location.search).get('editor-preview')==='1'){display.textContent='编辑预览';return;}
   if(location.hostname!=='san780020-lab.github.io'){display.textContent='—';return;}
   const script=document.createElement('script');
   script.src='https://busuanzi.9420.ltd/js';script.defer=true;script.dataset.prefix="busuanzi_value";
