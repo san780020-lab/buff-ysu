@@ -29,20 +29,22 @@
 #home-promotion .update-card { padding-top:20px; }
 #home-promotion strong { font-size:26px; margin:18px 0; max-width:none; }
 #home-promotion .update-read { margin-top:20px; }
-.showcase-card { min-height:380px; padding:28px 24px 0; }
+.showcase-card { display:flex; flex-direction:column; align-items:center; min-height:380px; padding:28px 24px 32px; }
+.showcase-card>.showcase-copy { flex:none; width:100%; }
 .showcase-copy>p { margin-bottom:9px; }
 .showcase-copy h2 { font-size:30px; line-height:1.25; letter-spacing:-.8px; }
 .showcase-copy>span { margin-top:12px; font-size:14px; }
 .showcase-copy a { margin-top:12px; }
-.brand-plaque { width:205px; height:145px; margin-top:26px; }
-.paper-stack { width:230px; height:190px; margin-top:26px; }
-.paper-stack>div { padding:18px; }
+.brand-plaque { flex:none; width:205px; max-width:calc(100% - 24px); height:145px; margin:26px auto 12px; box-shadow:0 12px 26px #0003; }
+.paper-stack { flex:none; width:min(230px,calc(100% - 48px)); height:190px; margin:26px auto 28px; }
+.paper-stack>div { padding:18px; box-shadow:0 6px 14px #0003; }
 .paper-stack strong { font-size:25px; margin-top:12px; }
 .paper-stack span { margin-top:12px; }
-.showcase-player { width:280px; height:155px; margin-top:26px; }
-.exam-preview { margin-top:25px; gap:10px; width:290px; }
-.exam-preview>span { padding:12px 16px; font-size:22px; }
-.reexam-preview { margin-top:28px; padding-bottom:45px; }
+.showcase-player { flex:none; width:280px; height:155px; margin:26px auto 12px; box-shadow:0 12px 26px #0003; }
+.exam-preview { flex:none; margin:25px auto 12px; gap:10px; width:min(290px,100%); }
+.exam-preview>span { padding:12px; gap:10px; font-size:22px; }
+.exam-preview b { min-width:0; line-height:1.6; text-align:left; }
+.reexam-preview { flex:none; max-width:100%; margin:28px auto 0; padding-bottom:45px; }
 .reexam-preview>span { width:60px; height:60px; font-size:16px; }
 
 /* Keep the page title and chapter navigation above the actual content. */
@@ -286,11 +288,12 @@ html[data-theme="light"] .history-chart { --history-academic:#2166c4; --history-
   .updates-heading h2 { font-size:25px; }
   .updates-panel { padding:18px; }
   #home-promotion strong { font-size:23px; }
-  .showcase-card { min-height:345px; padding:24px 20px 0; }
+  .showcase-card { min-height:345px; padding:24px 20px 28px; }
   .showcase-copy h2 { font-size:28px; }
   .showcase-copy>span { font-size:13px; }
-  .brand-plaque { width:190px; height:135px; margin-top:24px; }
-  .showcase-player { height:145px; }
+  .brand-plaque { width:180px; height:128px; margin-top:22px; }
+  .paper-stack { width:min(210px,calc(100% - 48px)); height:175px; margin-top:24px; }
+  .showcase-player { height:145px; margin-top:24px; }
   .content-page[data-page-type="overview"] .module-window-header { min-height:96px; padding:18px 16px; gap:12px; }
   .content-page[data-page-type="overview"] .module-window-heading { gap:10px; }
   .content-page[data-page-type="overview"] #module-title { font-size:25px; letter-spacing:-.4px; }
