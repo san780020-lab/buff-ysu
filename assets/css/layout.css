@@ -48,6 +48,11 @@
 .reexam-preview>span { width:60px; height:60px; font-size:16px; }
 
 /* Keep the page title and chapter navigation above the actual content. */
+html .module-dialog.content-page { min-height:0; }
+body.content-page-open { display:flex; flex-direction:column; min-height:100dvh; }
+body.content-page-open>.site-header,body.content-page-open>.module-dialog { flex:none; }
+body.content-page-open>.site-footer { flex:1; }
+.content-page[data-module="pdf"] #module-content { min-height:0; }
 .content-page[data-page-type="overview"] .module-window-header {
   display:flex; align-items:center; justify-content:space-between; gap:20px;
   min-height:100px; padding:16px max(24px,calc((100% - 1120px)/2));
